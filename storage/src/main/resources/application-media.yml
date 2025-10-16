@@ -1,0 +1,39 @@
+# Media Upload Configuration
+media:
+  service:
+    incoming-enabled: true # Assuming a default value, though it's true in the Java class
+    upload:
+      # uploadPath property: media.service.upload.path
+      path: D:/WhatsappProject/aigreentic-microservices/media-uploads
+      # uploadMaxSize property: media.service.upload.max-size
+      max-size: 52428800
+      # uploadAllowedImageTypes property: media.service.upload.allowed-image-types
+      allowed-image-types:
+        - image/jpeg
+        - image/jpg
+        - image/png
+      # uploadAllowedVideoTypes property: media.service.upload.allowed-video-types
+      allowed-video-types:
+        - video/mp4
+        - video/3gpp
+      # uploadAllowedDocumentTypes property: media.service.upload.allowed-document-types
+      allowed-document-types:
+        - application/pdf
+        - text/plain
+        - application/msword
+        - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        - application/vnd.ms-excel
+        - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        - application/vnd.ms-powerpoint
+        - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      # uploadAllowedAudioTypes property: media.service.upload.allowed-audio-types
+      allowed-audio-types:
+        - audio/mp4
+        - audio/mpeg
+        - audio/ogg
+        - audio/aac
+        - audio/amr, 
+    base:
+      # baseUrl property: media.service.base.url
+      url: http://localhost:8081/api/v1/media/
+

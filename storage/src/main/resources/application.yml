@@ -1,0 +1,62 @@
+spring:
+  profiles:
+    include:
+      - resilience
+      - feign
+      - database
+      - media
+      - eureka
+  application:
+    name: storage-service
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+    
+server:
+  port: 7998
+
+  
+#Pagination 
+pagination:
+  max-page-size: 100
+  default-page-size: 20
+  min-page-size: 1
+
+# Logging configuration
+logging:
+  level:
+    com:
+      aigreentick:
+        services:
+          storage: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,metrics,prometheus,env,beans,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    info:
+      enabled: true  #  just enable, not define info data here
+
+# Info metadata (optional but useful)
+info:
+  app:
+    name: Storage Service
+    version: 1.0.0
+    description: Handles file storage and media management
+  author:
+    name: Ashish Meena
+    organization: Aigreentick
+  build:
+    artifact: storage-service
+    version: 1.0.0
