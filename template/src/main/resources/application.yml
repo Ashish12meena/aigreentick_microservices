@@ -1,0 +1,15 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8888/eureka/  # Your Eureka server URL
+    register-with-eureka: true
+    fetch-registry: true
+
+
+user-service:
+    base-url: http://localhost:7999
+    api-version: v1
+    outgoing-enabled: true
+    connect-timeout: 5000
+    read-timeout: 10000
+
