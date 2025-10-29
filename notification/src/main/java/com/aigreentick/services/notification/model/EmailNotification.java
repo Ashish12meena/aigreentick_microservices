@@ -28,16 +28,18 @@ public class EmailNotification extends MongoBaseEntity {
     
     private List<String> bcc;
 
-    private String userId;
-
     private String subject;
-
+    
     private String body;
-
+    
     private NotificationStatus status;
-
+    
     private String templateId;
 
     private List<String> attachmentUrls;
+
+    private Integer retryCount;
+
+    private String userId;
 
 }

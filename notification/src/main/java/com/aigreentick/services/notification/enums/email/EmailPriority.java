@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.enums;
+package com.aigreentick.services.notification.enums.email;
 
 public enum EmailPriority {
     HIGHEST(1),

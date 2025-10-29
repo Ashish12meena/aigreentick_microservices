@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.service.provider;
+package com.aigreentick.services.notification.provider.mail;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailException;
@@ -22,11 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EmailNotifcationProvider {
+public class SmtpEmailProvider implements EmailNotificationProvider {
     private final JavaMailSender mailSender;
     private final EmailProperties properties;
 
-    public void sendEmail(EmailNotificationRequest request) throws MessagingException {
+    public void send(EmailNotificationRequest request) {
 
         try {
             MimeMessage message = buildMimeMessage(request);
@@ -34,8 +34,29 @@ public class EmailNotifcationProvider {
             log.info("Email sent successfully to: {}", request.getTo());
         } catch (MailException | MessagingException e) {
             log.error("Failed to send email to: {}", request.getTo(), e);
-            throw new MessagingException("Email sending failed: " + e.getMessage(), e);
+            
         }
+    }
+
+
+    @Override
+    public String getProviderType() {
+        return "SMTP";
+    }
+
+    @Override
+    public boolean isAvailable() {
+        try {
+            return mailSender != null;
+        } catch (Exception e) {
+            log.error("SMTP provider health check failed", e);
+            return false;
+        }
+    }
+
+    @Override
+    public int getPriority() {
+        return 10; // High priority as default provider
     }
 
     private MimeMessage buildMimeMessage(EmailNotificationRequest request) throws MessagingException {
@@ -92,4 +113,5 @@ public class EmailNotifcationProvider {
 
         return message;
     }
+
 }

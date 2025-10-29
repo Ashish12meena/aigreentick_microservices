@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import com.aigreentick.services.notification.enums.EmailPriority;
+import com.aigreentick.services.notification.enums.email.EmailPriority;
 
 /**
  * Request DTO for sending emails with full feature support
