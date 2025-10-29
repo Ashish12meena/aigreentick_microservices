@@ -1,0 +1,22 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+
+### VS Code ###
+.vscode/
+
+# 🔒 Sensitive Files
+###############################
+# Firebase service account key
+firebase-service-account.json
+
+# Environment and secret config files
+.env
+.env.*
+*.yml
+*.yaml
+application*.yml
+application*.yaml

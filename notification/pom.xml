@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.aigreentick.services</groupId>
-	<artifactId>file</artifactId>
+	<artifactId>notification</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>file</name>
-	<description>File handling for aigreentick</description>
+	<name>notification</name>
+	<description>Notification service to handle applicatiion notification</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -22,7 +22,7 @@
 	</developers>
 	<scm>
 		<connection/>
-		<developerConnection/>	
+		<developerConnection/>
 		<tag/>
 		<url/>
 	</scm>
@@ -43,23 +43,15 @@
 		<!-- Spring Boot Starters -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
+			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
 		<!-- Redis for Caching -->
@@ -70,6 +62,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
 		<!-- Spring Cloud -->
@@ -108,9 +104,8 @@
 
 		<!-- Database -->
 		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
@@ -119,20 +114,6 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
-		</dependency>
-
-		<!-- H2 for Testing -->	
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>  <!-- Only for tests -->
-		</dependency>
-
-		<!-- OpenAPI Documentation -->
-		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>${springdoc.version}</version>
 		</dependency>
 
 		<!-- Utilities -->
@@ -147,35 +128,17 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
-
-		<!-- AWS SDK v2 for S3 -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3</artifactId>
-			<version>2.20.156</version>
-		</dependency>
-
-		<!-- S3 Transfer Manager for multipart uploads -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3-transfer-manager</artifactId>
-			<version>2.20.156</version>
-		</dependency>
-
-		<!-- AWS Core -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>aws-core</artifactId>
-			<version>2.20.156</version>
-		</dependency>
-
-		<!-- For testing with LocalStack -->
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>localstack</artifactId>
-			<version>1.19.3</version>
-			<scope>test</scope>
-		</dependency>
+		
+		<!-- Notification Providers -->
+		 <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.2.0</version>
+        </dependency>
 
 		<!-- Testing -->
 		<dependency>
