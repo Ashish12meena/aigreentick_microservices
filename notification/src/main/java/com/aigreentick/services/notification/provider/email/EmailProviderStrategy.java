@@ -1,6 +1,6 @@
 package com.aigreentick.services.notification.provider.email;
 
-import com.aigreentick.services.notification.dto.email.EmailNotificationRequest;
+import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.enums.NotificationChannel;
 
 public interface EmailProviderStrategy {

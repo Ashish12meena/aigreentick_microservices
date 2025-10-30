@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.dto.email;
+package com.aigreentick.services.notification.dto.request.email;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

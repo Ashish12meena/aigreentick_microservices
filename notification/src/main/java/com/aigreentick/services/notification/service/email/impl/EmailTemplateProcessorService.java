@@ -8,7 +8,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
-import com.aigreentick.services.notification.dto.email.EmailNotificationRequest;
+import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.exceptions.EmailTemplateNotFoundException;
 import com.aigreentick.services.notification.exceptions.EmailTemplateProcessingException;
 import com.aigreentick.services.notification.model.entity.EmailTemplate;

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.aigreentick.services.notification.config.properties.EmailProperties;
-import com.aigreentick.services.notification.dto.email.EmailNotificationRequest;
+import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
