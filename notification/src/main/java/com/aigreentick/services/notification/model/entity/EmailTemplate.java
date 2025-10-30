@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.model;
+package com.aigreentick.services.notification.model.entity;
 
 import java.util.List;
 

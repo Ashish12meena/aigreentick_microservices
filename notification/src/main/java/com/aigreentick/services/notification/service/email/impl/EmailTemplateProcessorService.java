@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.service.impl;
+package com.aigreentick.services.notification.service.email.impl;
 
 import java.util.Map;
 
@@ -11,7 +11,7 @@ import org.thymeleaf.templateresolver.StringTemplateResolver;
 import com.aigreentick.services.notification.dto.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.exceptions.EmailTemplateNotFoundException;
 import com.aigreentick.services.notification.exceptions.EmailTemplateProcessingException;
-import com.aigreentick.services.notification.model.EmailTemplate;
+import com.aigreentick.services.notification.model.entity.EmailTemplate;
 import com.aigreentick.services.notification.repository.EmailTemplateRepository;
 
 import lombok.RequiredArgsConstructor;

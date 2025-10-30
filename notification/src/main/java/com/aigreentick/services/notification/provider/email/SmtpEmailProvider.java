@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.provider.mail;
+package com.aigreentick.services.notification.provider.email;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailException;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SmtpEmailProvider implements EmailNotificationProvider {
+public class SmtpEmailProvider implements EmailProviderStrategy {
     private final JavaMailSender mailSender;
     private final EmailProperties properties;
 
@@ -34,7 +34,6 @@ public class SmtpEmailProvider implements EmailNotificationProvider {
             log.info("Email sent successfully to: {}", request.getTo());
         } catch (MailException | MessagingException e) {
             log.error("Failed to send email to: {}", request.getTo(), e);
-            
         }
     }
 

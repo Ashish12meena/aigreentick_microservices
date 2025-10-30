@@ -1,9 +1,9 @@
-package com.aigreentick.services.notification.provider.mail;
+package com.aigreentick.services.notification.provider.email;
 
 import com.aigreentick.services.notification.dto.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.enums.NotificationChannel;
 
-public interface EmailNotificationProvider {
+public interface EmailProviderStrategy {
     void send(EmailNotificationRequest request);
 
     String getProviderType(); 
