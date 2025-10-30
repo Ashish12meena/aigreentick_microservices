@@ -54,7 +54,7 @@ public class EmailTemplateProcessorService {
         
         try {
             // Fetch template from database
-            EmailTemplate template = templateRepository.findByTemplateCode(templateId)
+            EmailTemplate template = templateRepository.findById(templateId)
                 .orElseThrow(() -> new EmailTemplateNotFoundException("Template not found: " + templateId));
             
             // Create Thymeleaf context
@@ -65,7 +65,7 @@ public class EmailTemplateProcessorService {
             String processedSubject = templateEngine.process(template.getSubject(), context);
             
             // Process body
-            String processedBody = templateEngine.process(template.getBody(), context);
+            String processedBody = templateEngine.process(template.getBody(), context); 
             
             // Build updated request
             return baseRequest.toBuilder()
