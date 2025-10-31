@@ -9,6 +9,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.aigreentick.services.notification.config.properties.EmailProperties;
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
+import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -39,8 +40,8 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
 
 
     @Override
-    public String getProviderType() {
-        return "SMTP";
+    public EmailProviderType getProviderType() {
+        return EmailProviderType.SMTP;
     }
 
     @Override

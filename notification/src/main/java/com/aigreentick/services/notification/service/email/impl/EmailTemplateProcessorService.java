@@ -14,7 +14,6 @@ import com.aigreentick.services.notification.exceptions.EmailTemplateProcessingE
 import com.aigreentick.services.notification.model.entity.EmailTemplate;
 import com.aigreentick.services.notification.repository.EmailTemplateRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,11 +22,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailTemplateProcessorService {
     
     private final EmailTemplateRepository templateRepository;
     private final TemplateEngine templateEngine;
+
     
     /**
      * Constructor to configure Thymeleaf for string-based templates

@@ -2,11 +2,12 @@ package com.aigreentick.services.notification.provider.email;
 
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.enums.NotificationChannel;
+import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
 public interface EmailProviderStrategy {
     void send(EmailNotificationRequest request);
 
-    String getProviderType(); 
+    EmailProviderType getProviderType(); 
 
     boolean isAvailable();
 

@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.aigreentick.services.common.model.base.MongoBaseEntity;
 import com.aigreentick.services.notification.enums.NotificationStatus;
+import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,6 +38,8 @@ public class EmailNotification extends MongoBaseEntity {
     private String templateId;
 
     private List<String> attachmentUrls;
+
+    private EmailProviderType providerType;
 
     private Integer retryCount;
 
