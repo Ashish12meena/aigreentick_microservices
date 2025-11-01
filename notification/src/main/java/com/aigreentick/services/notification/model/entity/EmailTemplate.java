@@ -32,6 +32,8 @@ public class EmailTemplate extends MongoBaseEntity {
 
     private String userId;
 
+    private boolean active;
+
     private List<String> variables;
 
 }

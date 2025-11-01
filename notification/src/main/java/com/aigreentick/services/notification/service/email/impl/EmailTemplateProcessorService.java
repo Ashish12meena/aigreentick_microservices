@@ -2,11 +2,10 @@ package com.aigreentick.services.notification.service.email.impl;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.exceptions.EmailTemplateNotFoundException;
@@ -14,118 +13,95 @@ import com.aigreentick.services.notification.exceptions.EmailTemplateProcessingE
 import com.aigreentick.services.notification.model.entity.EmailTemplate;
 import com.aigreentick.services.notification.repository.EmailTemplateRepository;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Service for processing email templates with variable substitution
- * Uses Thymeleaf for template rendering
- */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailTemplateProcessorService {
-    
-    private final EmailTemplateRepository templateRepository;
-    private final TemplateEngine templateEngine;
 
-    
-    /**
-     * Constructor to configure Thymeleaf for string-based templates
-     */
-    public EmailTemplateProcessorService(EmailTemplateRepository templateRepository) {
-        this.templateRepository = templateRepository;
-        this.templateEngine = createTemplateEngine();
-    }
-    
-    /**
-     * Process template and merge with notification request
-     * 
-     * @param templateId Template identifier
-     * @param variables Variables for template substitution
-     * @param baseRequest Base request to merge with template
-     * @return Updated request with processed template
-     */
+    private final EmailTemplateRepository templateRepository;
+
+    @Qualifier("stringTemplateEngine")
+    private final TemplateEngine stringTemplateEngine;
+
+    @Qualifier("fileTemplateEngine")
+    private final TemplateEngine fileTemplateEngine;
+
     public EmailNotificationRequest processTemplate(
-            String templateId, 
+            String templateId,
             Map<String, Object> variables,
             EmailNotificationRequest baseRequest) {
-        
-        log.info("Processing template: {} with {} variables", templateId, variables.size());
-        
+
+        log.info("Processing template: {} with {} variables",
+                templateId, variables.size());
+
         try {
-            // Fetch template from database
             EmailTemplate template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new EmailTemplateNotFoundException("Template not found: " + templateId));
-            
-            // Create Thymeleaf context
+                    .orElseThrow(() -> new EmailTemplateNotFoundException(
+                            "Template not found: " + templateId));
+
+            if (!template.isActive()) {
+                throw new EmailTemplateProcessingException(
+                        "Template is inactive: " + templateId, null);
+            }
+
             Context context = new Context();
             context.setVariables(variables);
-            
-            // Process subject
-            String processedSubject = templateEngine.process(template.getSubject(), context);
-            
-            // Process body
-            String processedBody = templateEngine.process(template.getBody(), context); 
-            
-            // Build updated request
+
+            String processedSubject = stringTemplateEngine.process(
+                    template.getSubject(), context);
+
+            String processedBody = stringTemplateEngine.process(
+                    template.getBody(), context);
+
             return baseRequest.toBuilder()
-                .subject(processedSubject)
-                .body(processedBody)
-                .isHtml(true) // Templates are typically HTML
-                .build();
-                
+                    .subject(processedSubject)
+                    .body(processedBody)
+                    .isHtml(true)
+                    .build();
+
         } catch (EmailTemplateNotFoundException e) {
             throw e;
         } catch (Exception e) {
             log.error("Error processing template: {}", templateId, e);
-            throw new EmailTemplateProcessingException("Failed to process template: " + templateId, e);
+            throw new EmailTemplateProcessingException(
+                    "Failed to process template: " + templateId, e);
         }
     }
-    
-    /**
-     * Process template with template code (instead of ID)
-     * 
-     * @param templateCode Template code
-     * @param variables Variables for substitution
-     * @return Processed HTML content
-     */
-    public String processTemplateByCode(String templateCode, Map<String, Object> variables) {
+
+    public EmailNotificationRequest processTemplateByCode(
+            String templateCode,
+            Map<String, Object> variables,
+            EmailNotificationRequest baseRequest) {
+
+        log.info("Processing template by code: {}", templateCode);
+
         EmailTemplate template = templateRepository.findByTemplateCode(templateCode)
-            .orElseThrow(() -> new EmailTemplateNotFoundException("Template not found: " + templateCode));
-        
+                .orElseThrow(() -> new EmailTemplateNotFoundException(
+                        "Template not found: " + templateCode));
+
+        return processTemplate(template.getId(), variables, baseRequest);
+    }
+
+    public String processFileTemplate(String templateName, Map<String, Object> variables) {
+        log.info("Processing file template: {}", templateName);
+
         Context context = new Context();
         context.setVariables(variables);
-        
-        return templateEngine.process(template.getBody(), context);
+
+        return fileTemplateEngine.process(templateName, context);
     }
-    
-    /**
-     * Validate template syntax without processing
-     * 
-     * @param templateContent Template content to validate
-     * @return true if valid
-     */
+
     public boolean validateTemplate(String templateContent) {
         try {
             Context context = new Context();
-            templateEngine.process(templateContent, context);
+            stringTemplateEngine.process(templateContent, context);
             return true;
         } catch (Exception e) {
             log.error("Template validation failed", e);
             return false;
         }
-    }
-    
-    /**
-     * Create and configure Thymeleaf template engine for string templates
-     */
-    private TemplateEngine createTemplateEngine() {
-        StringTemplateResolver templateResolver = new StringTemplateResolver();
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        templateResolver.setCacheable(false); // Disable cache for dynamic DB templates
-        
-        TemplateEngine engine = new TemplateEngine();
-        engine.setTemplateResolver(templateResolver);
-        
-        return engine;
     }
 }

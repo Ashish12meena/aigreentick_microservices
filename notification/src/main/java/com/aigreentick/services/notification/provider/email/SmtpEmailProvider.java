@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.aigreentick.services.notification.config.properties.EmailProperties;
+import com.aigreentick.services.notification.config.properties.SmtpProviderProperties;
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
@@ -25,7 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SmtpEmailProvider implements EmailProviderStrategy {
     private final JavaMailSender mailSender;
-    private final EmailProperties properties;
+    private final EmailProperties emailProperties;
+    private final SmtpProviderProperties smtpProperties;
 
     public void send(EmailNotificationRequest request) {
 
@@ -35,9 +37,9 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
             log.info("Email sent successfully to: {}", request.getTo());
         } catch (MailException | MessagingException e) {
             log.error("Failed to send email to: {}", request.getTo(), e);
+            throw new RuntimeException("SMTP send failed", e);
         }
     }
-
 
     @Override
     public EmailProviderType getProviderType() {
@@ -46,6 +48,9 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
 
     @Override
     public boolean isAvailable() {
+        if (!smtpProperties.isEnabled()) {
+            return false;
+        }
         try {
             return mailSender != null;
         } catch (Exception e) {
@@ -56,14 +61,14 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
 
     @Override
     public int getPriority() {
-        return 10; // High priority as default provider
+        return smtpProperties.getPriority();
     }
 
     private MimeMessage buildMimeMessage(EmailNotificationRequest request) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, emailProperties.getEncoding());
 
-        helper.setFrom(properties.getFromEmail());
+        helper.setFrom(emailProperties.getFromEmail());
         helper.setTo(request.getTo().toArray(new String[0]));
         helper.setSubject(request.getSubject());
         helper.setText(request.getBody(), request.isHtml());

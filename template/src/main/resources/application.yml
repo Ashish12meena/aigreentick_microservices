@@ -1,5 +1,6 @@
 eureka:
   client:
+    enabled: false
     service-url:
       defaultZone: http://localhost:8888/eureka/  # Your Eureka server URL
     register-with-eureka: true
