@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailNotificationController {
     private final EmailOrchestratorserviceImpl emailOrchestratorservice;
 
-    @PostMapping("/send")
+    @PostMapping(value = "/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EmailNotificationResponse> sendEmail(
-            @Valid @RequestBody EmailNotificationControllerRequest request,
+            @RequestPart("request") @Valid EmailNotificationControllerRequest request,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachmentFiles,
             @RequestPart(value = "inline", required = false) List<MultipartFile> inlineResources) {
         log.info("Received request to send email to: {}", request.getTo());

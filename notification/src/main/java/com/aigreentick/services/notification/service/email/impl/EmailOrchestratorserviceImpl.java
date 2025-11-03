@@ -25,16 +25,16 @@ public class EmailOrchestratorserviceImpl {
         private final EmailValidationService validationService;
         private final EmailNotificationMapper emailNotificationMapper;
 
-        public EmailNotificationResponse sendEmail(EmailNotificationControllerRequest requestWithoutAttachement,
+        public EmailNotificationResponse sendEmail(EmailNotificationControllerRequest request,
                         List<MultipartFile> attachmentFiles, List<MultipartFile> inlineResources) {
-                log.info("Orchestrating email send to: {}", requestWithoutAttachement.getTo());
+                log.info("Orchestrating email send to: {}", request.getTo());
 
                 // Use mapper to convert
-                EmailNotificationRequest request = emailNotificationMapper
-                                .toEmailRequest(requestWithoutAttachement, attachmentFiles,inlineResources);
+                EmailNotificationRequest emailNotificationRequest = emailNotificationMapper
+                                .toEmailRequest(request, attachmentFiles,inlineResources);
 
-                validationService.validateEmailRequest(request);
-                EmailNotification notification = emailDeliveryService.deliver(request);
+                validationService.validateEmailRequest(emailNotificationRequest);
+                EmailNotification notification = emailDeliveryService.deliver(emailNotificationRequest);
                 return mapToResponse(notification);
         }
 

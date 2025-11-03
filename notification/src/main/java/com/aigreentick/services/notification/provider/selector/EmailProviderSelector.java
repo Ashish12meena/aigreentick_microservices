@@ -35,7 +35,7 @@ public class EmailProviderSelector {
 
         EmailProviderStrategy provider = providers.get(activeProviderType);
 
-        if (provider != null && provider.isAvailable()) {
+        if (provider != null && provider.isAvailable()) {   
             log.debug("Selected active provider: {}", activeProviderType);
             return provider;
         }
