@@ -12,6 +12,7 @@ import com.aigreentick.services.notification.dto.request.email.SendTemplatedEmai
 import com.aigreentick.services.notification.dto.response.EmailNotificationResponse;
 import com.aigreentick.services.notification.mapper.EmailNotificationMapper;
 import com.aigreentick.services.notification.model.entity.EmailNotification;
+import com.aigreentick.services.notification.validator.EmailValidationService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

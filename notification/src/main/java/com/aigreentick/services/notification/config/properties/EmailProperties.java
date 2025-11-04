@@ -4,7 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import io.github.resilience4j.springboot3.ratelimiter.autoconfigure.RateLimiterProperties;
-import io.github.resilience4j.springboot3.retry.autoconfigure.RetryProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
@@ -19,7 +18,7 @@ public class EmailProperties {
 
     private String encoding = "UTF-8";
 
-    private RetryProperties retry;
+    private RetryProperties retry = new RetryProperties();
     private EmailTemplateProperties template;
     private RateLimiterProperties rateLimit;
     private ValidationProperties validation = new ValidationProperties();

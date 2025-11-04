@@ -1,4 +1,4 @@
-package com.aigreentick.services.notification.service.email.impl;
+package com.aigreentick.services.notification.validator;
 
 import java.util.regex.Pattern;
 

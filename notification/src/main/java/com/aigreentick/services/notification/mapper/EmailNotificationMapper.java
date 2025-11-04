@@ -24,11 +24,12 @@ public class EmailNotificationMapper {
      */
     public EmailNotificationRequest toEmailRequest(
             EmailNotificationControllerRequest multipartRequest,
-            List<MultipartFile> attachmentFiles, List<MultipartFile> inlineResourceFiles) {
+            List<MultipartFile> attachmentFiles,
+            List<MultipartFile> inlineResourceFiles) {
         log.debug("Mapping multipart request to EmailNotificationRequest");
 
         List<EmailAttachment> attachments = convertMultipartFiles(attachmentFiles);
-        List<InlineResource> inlineResources = convertMultipartFilesToInlineResources(
+        List<InlineResource> inlineResources = convertAndValidateInlineResources(
                 inlineResourceFiles,
                 multipartRequest.getInlineResourceIds());
 
@@ -62,11 +63,11 @@ public class EmailNotificationMapper {
     /**
      * Converts MultipartFiles to InlineResource list with content IDs
      */
-    public List<InlineResource> convertMultipartFilesToInlineResources(
-            List<MultipartFile> files,
+    public List<InlineResource> convertAndValidateInlineResources(
+            List<MultipartFile> inlineResourceFiles,
             List<String> contentIds) {
 
-        if (files == null || files.isEmpty()) {
+        if (inlineResourceFiles == null || inlineResourceFiles.isEmpty()) {
             log.debug("No inline resources to convert");
             return Collections.emptyList();
         }
@@ -78,21 +79,22 @@ public class EmailNotificationMapper {
                     "Content IDs must be provided for inline resources");
         }
 
-        if (files.size() != contentIds.size()) {
-            log.error("Mismatch: {} files but {} content IDs", files.size(), contentIds.size());
+        if (inlineResourceFiles.size() != contentIds.size()) {
+            log.error("Mismatch: {} files but {} content IDs", inlineResourceFiles.size(), contentIds.size());
             throw new IllegalArgumentException(
                     String.format("Number of inline resource files (%d) must match number of content IDs (%d)",
-                            files.size(), contentIds.size()));
+                            inlineResourceFiles.size(), contentIds.size()));
         }
 
-        log.info("Converting {} multipart file(s) to inline resources", files.size());
+        log.info("Converting {} multipart file(s) to inline resources", inlineResourceFiles.size());
 
         // Map files with their corresponding content IDs
-        return IntStream.range(0, files.size())
-                .filter(i -> isValidFile(files.get(i)))
-                .mapToObj(i -> convertFileToInlineResource(files.get(i), contentIds.get(i)))
+        return IntStream.range(0, inlineResourceFiles.size())
+                .filter(i -> isValidFile(inlineResourceFiles.get(i)))
+                .mapToObj(i -> convertFileToInlineResource(inlineResourceFiles.get(i), contentIds.get(i)))
                 .collect(Collectors.toList());
     }
+
     /**
      * Converts single MultipartFile to InlineResource with content ID
      */
@@ -123,17 +125,18 @@ public class EmailNotificationMapper {
         }
     }
 
+
     /**
      * Determines content type with fallback
      */
     private String determineContentType(MultipartFile file) {
         String contentType = file.getContentType();
-        
+
         if (contentType == null || contentType.isBlank()) {
             log.warn("No content type for file: {}, using default", file.getOriginalFilename());
             return "application/octet-stream";
         }
-        
+
         return contentType;
     }
 

@@ -16,6 +16,7 @@ import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.provider.email.EmailProviderStrategy;
 import com.aigreentick.services.notification.provider.selector.EmailProviderSelector;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,6 +29,7 @@ public class EmailDeliveryServiceImpl {
     private final EmailProperties emailProperties;
 
     @Transactional
+    @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
     public EmailNotification deliver(EmailNotificationRequest request) {
         EmailProviderStrategy provider = providerSelector.selectProvider();
 
@@ -95,6 +97,31 @@ public class EmailDeliveryServiceImpl {
         }
         return notification;
     }
+
+    @SuppressWarnings("unused")
+    private EmailNotification deliverFallback(
+            EmailNotificationRequest request,
+            Exception exception) {
+
+        log.error("Email delivery failed after all retry attempts for: {}. Error: {}",
+                request.getTo(),
+                exception.getMessage());
+
+        // Create failed notification record
+        EmailNotification failedNotification = EmailNotification.builder()
+                .to(request.getTo())
+                .from(emailProperties.getFromEmail())
+                .cc(request.getCc())
+                .bcc(request.getBcc())
+                .subject(request.getSubject())
+                .body(request.getBody())
+                .status(NotificationStatus.FAILED)
+                .providerType(EmailProviderType.SMTP)
+                .retryCount(emailProperties.getRetry().getMaxAttempts())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return emailNotificationService.save(failedNotification);
+    }
 }
-
-
