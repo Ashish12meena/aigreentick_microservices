@@ -86,4 +86,16 @@ public class EmailOrchestratorserviceImpl {
                                 .build();
         }
 
+        public CompletableFuture<String> sendEmailViaKafka(EmailNotificationRequest request, String userId,
+                        String sourceService) {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'sendEmailViaKafka'");
+        }
+
+        public CompletableFuture<String> sendTemplatedEmailViaKafka(SendTemplatedEmailRequest request,
+                String userId) {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'sendTemplatedEmailViaKafka'");
+        }
+
 }

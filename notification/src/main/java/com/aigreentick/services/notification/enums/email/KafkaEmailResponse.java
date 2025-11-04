@@ -1,0 +1,17 @@
+package com.aigreentick.services.notification.enums.email;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class KafkaEmailResponse {
+    private String eventId;
+    private String status;
+    private String message;
+
+}
