@@ -3,7 +3,7 @@ package com.aigreentick.services.notification.model.entity;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import org.springframework.data.mongodb.core.index.Indexed;
+
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.aigreentick.services.common.model.base.MongoBaseEntity;
@@ -21,20 +21,14 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor 
 public class NotificationAudit extends MongoBaseEntity {
     
-    @Indexed
     private String auditId;
     
-    @Indexed
     private String notificationId;
     
-    @Indexed
     private String eventId;
-    
-    @Indexed
-    private String correlationId;
     
     private NotificationChannel channel;
     
@@ -52,13 +46,10 @@ public class NotificationAudit extends MongoBaseEntity {
     
     private String errorCode;
     
-    @Indexed
     private LocalDateTime timestamp;
     
-    @Indexed
     private String userId;
     
-    private String sourceService;
     
     private Map<String, String> metadata;
 }

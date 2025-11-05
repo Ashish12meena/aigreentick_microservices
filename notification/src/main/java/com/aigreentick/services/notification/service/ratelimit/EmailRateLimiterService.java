@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.data.redis.core.RedisTemplate;
+// import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.aigreentick.services.notification.config.properties.EmailProperties;
@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailRateLimiterService {
 
     private final EmailProperties emailProperties;
-    private final RedisTemplate<String, String> redisTemplate;
+    // private final RedisTemplate<String, String> redisTemplate;
     
     private final Map<String, LocalBucket> userBuckets = new ConcurrentHashMap<>();
     private final Map<String, LocalBucket> ipBuckets = new ConcurrentHashMap<>();
