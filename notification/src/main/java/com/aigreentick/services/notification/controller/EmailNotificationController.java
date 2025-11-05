@@ -19,7 +19,7 @@ import com.aigreentick.services.notification.dto.request.email.EmailNotification
 import com.aigreentick.services.notification.dto.request.email.SendTemplatedEmailRequest;
 import com.aigreentick.services.notification.dto.response.EmailNotificationResponse;
 import com.aigreentick.services.notification.enums.email.KafkaEmailResponse;
-import com.aigreentick.services.notification.service.email.impl.EmailOrchestratorserviceImpl;
+import com.aigreentick.services.notification.service.email.impl.EmailOrchestratorServiceImpl;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/notification/email")
 public class EmailNotificationController {
-    private final EmailOrchestratorserviceImpl emailOrchestratorservice;
+    private final EmailOrchestratorServiceImpl emailOrchestratorservice;
 
     /**
      * Send email synchronously with multipart support

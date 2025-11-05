@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class EmailTemplateService {
     
     private final EmailTemplateRepository templateRepository;
-    private final EmailTemplateProcessorService processorService;
 
     @Transactional
     public TemplateResponse createTemplate(CreateTemplateRequest request) {
@@ -32,11 +31,7 @@ public class EmailTemplateService {
             throw new IllegalArgumentException(
                     "Template code already exists: " + request.getTemplateCode());
         }
-        
-        if (!processorService.validateTemplate(request.getBody())) {
-            throw new IllegalArgumentException(
-                    "Invalid template syntax in body");
-        }
+    
         
         EmailTemplate template = EmailTemplate.builder()
                 .templateCode(request.getTemplateCode())
@@ -62,11 +57,7 @@ public class EmailTemplateService {
                 .orElseThrow(() -> new EmailTemplateNotFoundException(
                         "Template not found: " + id));
         
-        if (!processorService.validateTemplate(request.getBody())) {
-            throw new IllegalArgumentException(
-                    "Invalid template syntax in body");
-        }
-        
+    
         template.setName(request.getName());
         template.setSubject(request.getSubject());
         template.setBody(request.getBody());

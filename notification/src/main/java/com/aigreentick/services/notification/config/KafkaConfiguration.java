@@ -28,6 +28,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.aigreentick.services.notification.config.properties.KafkaTopicProperties;
 import com.aigreentick.services.notification.kafka.event.EmailNotificationEvent;
+import com.aigreentick.services.notification.kafka.event.NotificationAuditEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,7 +108,7 @@ public class KafkaConfiguration {
                 .build();
     }
 
-    // ==================== Producer Configuration ====================
+    // ==================== Email Notification Producer ====================
 
     @Bean
     public ProducerFactory<String, EmailNotificationEvent> emailNotificationProducerFactory() {
@@ -134,7 +135,31 @@ public class KafkaConfiguration {
         return new KafkaTemplate<>(emailNotificationProducerFactory());
     }
 
-    // ==================== Consumer Configuration ====================
+    // ==================== Audit Event Producer ====================
+
+    @Bean
+    public ProducerFactory<String, NotificationAuditEvent> auditEventProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configProps.put(ProducerConfig.ACKS_CONFIG, "1"); // Lower guarantee for audit (fire-and-forget style)
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 2);
+        configProps.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+        configProps.put(ProducerConfig.BATCH_SIZE_CONFIG, 32768);
+        configProps.put(ProducerConfig.LINGER_MS_CONFIG, 50); // Batch more aggressively
+        configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+
+        log.info("Audit Event Producer Factory configured");
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, NotificationAuditEvent> auditKafkaTemplate() {
+        return new KafkaTemplate<>(auditEventProducerFactory());
+    }
+
+    // ==================== Email Notification Consumer ====================
 
     @Bean
     public ConsumerFactory<String, EmailNotificationEvent> emailNotificationConsumerFactory() {
@@ -172,7 +197,7 @@ public class KafkaConfiguration {
         return factory;
     }
 
-    // ==================== Retry Consumer Configuration ====================
+    // ==================== Retry Consumer ====================
 
     @Bean
     public ConsumerFactory<String, EmailNotificationEvent> retryConsumerFactory() {

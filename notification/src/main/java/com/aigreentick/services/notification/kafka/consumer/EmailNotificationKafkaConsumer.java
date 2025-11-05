@@ -14,6 +14,7 @@ import com.aigreentick.services.notification.kafka.producer.KafkaProducerService
 import com.aigreentick.services.notification.mapper.EmailEventMapper;
 import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.service.email.impl.EmailDeliveryServiceImpl;
+import com.aigreentick.services.notification.service.email.impl.EmailTemplateProcessorService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailNotificationKafkaConsumer {
 
     private final EmailDeliveryServiceImpl emailDeliveryService;
+    private final EmailTemplateProcessorService templateProcessor;
     private final KafkaProducerService kafkaProducerService;
     private final KafkaTopicProperties topicProperties;
     private final EmailEventMapper emailEventMapper;
@@ -115,15 +117,28 @@ public class EmailNotificationKafkaConsumer {
     private void processEmailNotification(EmailNotificationEvent event) {
         log.debug("Processing email notification event. EventId: {}", event.getEventId());
         
-        EmailNotificationRequest request = emailEventMapper.toEmailRequest(event);
+        // Check if it's a template-based notification
+        EmailNotificationRequest request;
+        if (event.getTemplateCode() != null && !event.getTemplateCode().isEmpty()) {
+            // Process template first
+            EmailNotificationRequest baseRequest = emailEventMapper.toEmailRequest(event);
+            request = templateProcessor.processTemplateByCode(
+                    event.getTemplateCode(),
+                    event.getTemplateVariables(),
+                    baseRequest);
+        } else {
+            // Direct email content
+            request = emailEventMapper.toEmailRequest(event);
+        }
         
         long startTime = System.currentTimeMillis();
-        EmailNotification notification = emailDeliveryService.deliver(request);
+        EmailNotification notification = emailDeliveryService.deliver(request, event.getEventId());
         long processingTime = System.currentTimeMillis() - startTime;
         
         log.info("Email delivered successfully. EventId: {}, NotificationId: {}, ProcessingTime: {}ms",
                 event.getEventId(), notification.getId(), processingTime);
         
+        // Send success event
         kafkaProducerService.sendSuccessEvent(event, notification.getId());
     }
 

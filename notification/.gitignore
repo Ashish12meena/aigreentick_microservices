@@ -16,7 +16,4 @@ firebase-service-account.json
 # Environment and secret config files
 .env
 .env.*
-*.yml
-*.yaml
-application*.yml
-application*.yaml
+application-database.yml
