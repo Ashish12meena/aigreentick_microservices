@@ -36,6 +36,25 @@ async:
     thread-name-prefix: ${ASYNC_PUSH_THREAD_PREFIX:push-async-}
     keep-alive-seconds: ${ASYNC_PUSH_KEEP_ALIVE:60}
 
+# ============================================
+# BATCH WRITER CONFIGURATION
+# ============================================
+batch:
+  notification:
+    enabled: ${BATCH_WRITER_ENABLED:true}
+    batch-size: ${BATCH_WRITER_SIZE:50}
+    queue-capacity: ${BATCH_WRITER_QUEUE:1000}
+    flush-interval-ms: ${BATCH_WRITER_FLUSH:1000}
+
+# ============================================
+# OUTBOX CONFIGURATION
+# ============================================
+outbox:
+  publisher:
+    enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL:5000}
+    batch-size: ${OUTBOX_BATCH_SIZE:100}
+
 
 
 # ============================================

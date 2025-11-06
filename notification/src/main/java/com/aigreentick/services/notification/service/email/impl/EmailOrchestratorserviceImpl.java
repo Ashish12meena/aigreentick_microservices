@@ -33,7 +33,7 @@ public class EmailOrchestratorServiceImpl {
     private final KafkaProducerService kafkaProducerService;
     private final EmailEventMapper emailEventMapper;
 
-    // ==================== Synchronous Email Sending ====================
+    // ==================== Synchronous Email Sending` ====================
 
     public EmailNotificationResponse sendEmail(EmailNotificationControllerRequest request,
                                                 List<MultipartFile> attachmentFiles, 

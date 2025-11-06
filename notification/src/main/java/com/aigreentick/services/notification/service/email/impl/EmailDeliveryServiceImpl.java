@@ -1,3 +1,4 @@
+// src/main/java/com/aigreentick/services/notification/service/email/impl/EmailDeliveryServiceImpl.java
 package com.aigreentick.services.notification.service.email.impl;
 
 import java.time.LocalDateTime;
@@ -12,10 +13,12 @@ import com.aigreentick.services.notification.dto.request.email.EmailNotification
 import com.aigreentick.services.notification.enums.NotificationStatus;
 import com.aigreentick.services.notification.enums.email.EmailProviderType;
 import com.aigreentick.services.notification.exceptions.NotificationSendException;
-import com.aigreentick.services.notification.kafka.producer.KafkaAuditProducer;
+import com.aigreentick.services.notification.kafka.event.NotificationAuditEvent;
 import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.provider.email.EmailProviderStrategy;
 import com.aigreentick.services.notification.provider.selector.EmailProviderSelector;
+import com.aigreentick.services.notification.service.batch.BatchNotificationWriter;
+import com.aigreentick.services.notification.service.outbox.OutboxService;
 
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +31,8 @@ public class EmailDeliveryServiceImpl {
     private final EmailProviderSelector providerSelector;
     private final EmailNotificationServiceImpl emailNotificationService;
     private final EmailProperties emailProperties;
-    private final KafkaAuditProducer auditProducer;
+    private final OutboxService outboxService;
+    private final BatchNotificationWriter batchWriter;
 
     @Transactional
     @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
@@ -101,37 +105,76 @@ public class EmailDeliveryServiceImpl {
             errorMessage = e.getMessage();
             throw new NotificationSendException("Failed to deliver email", e);
         } finally {
-            // Save notification to database
-            emailNotificationService.save(notification);
+            // Use batch writer for async persistence
+            EmailNotification savedNotification = persistNotificationAsync(notification);
             
-            // Send audit event to Kafka asynchronously (fire-and-forget)
-            long processingTime = System.currentTimeMillis() - startTime;
-            sendAuditEventAsync(notification, eventId, processingTime, errorMessage);
+            // Create audit event in outbox (transactional with notification save)
+            saveAuditEventToOutbox(savedNotification, eventId, 
+                    System.currentTimeMillis() - startTime, errorMessage);
         }
         
         return notification;
     }
 
     /**
-     * Send audit event asynchronously without blocking main flow
+     * Persist notification using batch writer (non-blocking)
      */
-    private void sendAuditEventAsync(EmailNotification notification, 
-                                      String eventId, 
-                                      Long processingTime,
-                                      String errorMessage) {
+    private EmailNotification persistNotificationAsync(EmailNotification notification) {
         try {
-            auditProducer.sendEmailAuditEvent(notification, eventId, processingTime, errorMessage)
-                    .whenComplete((result, ex) -> {
-                        if (ex != null) {
-                            log.error("Failed to send audit event for notification: {}. " +
-                                    "This is non-critical and won't affect email delivery.",
-                                    notification.getId(), ex);
-                        }
-                    });
+            // Try batch writer first
+            boolean enqueued = batchWriter.enqueue(notification);
+            
+            if (!enqueued) {
+                // Fallback to synchronous save if queue is full
+                return emailNotificationService.save(notification);
+            }
+            
+            return notification;
+            
         } catch (Exception e) {
-            // Log but don't fail the main operation
-            log.error("Exception while sending audit event: {}", e.getMessage());
+            log.error("Error enqueueing notification for batch write, saving synchronously", e);
+            return emailNotificationService.save(notification);
         }
+    }
+
+    /**
+     * Save audit event to outbox (async via scheduled publisher)
+     */
+    private void saveAuditEventToOutbox(EmailNotification notification, 
+                                         String eventId, 
+                                         Long processingTime,
+                                         String errorMessage) {
+        try {
+            NotificationAuditEvent auditEvent = buildAuditEvent(
+                    notification, eventId, processingTime, errorMessage);
+            
+            // Save to outbox - will be published asynchronously
+            outboxService.saveAuditEvent(auditEvent);
+            
+        } catch (Exception e) {
+            log.error("Error saving audit event to outbox for notification: {}. " +
+                    "This is non-critical.", notification.getId(), e);
+        }
+    }
+
+    private NotificationAuditEvent buildAuditEvent(EmailNotification notification,
+                                                     String eventId,
+                                                     Long processingTime,
+                                                     String errorMessage) {
+        return NotificationAuditEvent.builder()
+                .notificationId(notification.getId())
+                .eventId(eventId)
+                .status(notification.getStatus())
+                .providerType(notification.getProviderType() != null ? 
+                        notification.getProviderType().name() : null)
+                .recipient(notification.getTo() != null && !notification.getTo().isEmpty() ? 
+                        notification.getTo().get(0) : null)
+                .retryCount(notification.getRetryCount())
+                .processingTimeMs(processingTime)
+                .errorMessage(errorMessage)
+                .userId(notification.getUserId())
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 
     @SuppressWarnings("unused")
@@ -144,7 +187,6 @@ public class EmailDeliveryServiceImpl {
                 request.getTo(),
                 exception.getMessage());
 
-        // Create failed notification record
         EmailNotification failedNotification = EmailNotification.builder()
                 .to(request.getTo())
                 .from(emailProperties.getFromEmail())
@@ -161,9 +203,8 @@ public class EmailDeliveryServiceImpl {
 
         EmailNotification saved = emailNotificationService.save(failedNotification);
         
-        // Send audit event for failed delivery
-        long processingTime = System.currentTimeMillis() - startTime;
-        sendAuditEventAsync(saved, eventId, processingTime, exception.getMessage());
+        saveAuditEventToOutbox(saved, eventId, 
+                System.currentTimeMillis() - startTime, exception.getMessage());
         
         return saved;
     }
