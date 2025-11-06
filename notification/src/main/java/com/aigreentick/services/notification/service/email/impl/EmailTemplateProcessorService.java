@@ -1,11 +1,10 @@
 package com.aigreentick.services.notification.service.email.impl;
 
-import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -25,12 +24,17 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailTemplateProcessorService {
 
     private final EmailTemplateRepository templateRepository;
-    private final TemplateEngine stringTemplateEngine;
-    private final RedisTemplate<String, EmailTemplate> redisTemplate;
     
-    private static final String TEMPLATE_CACHE_KEY = "email:template:";
-    private static final Duration CACHE_TTL = Duration.ofHours(1);
+    @Qualifier("stringTemplateEngine")
+    private final TemplateEngine stringTemplateEngine;
+    
+    @Qualifier("fileTemplateEngine") 
+    private final TemplateEngine fileTemplateEngine;
 
+    /**
+     * Get template by code with Redis caching
+     * Spring Cache will automatically handle Redis storage
+     */
     @Cacheable(value = "emailTemplates", key = "#templateCode", unless = "#result == null")
     public EmailTemplate getTemplateByCode(String templateCode) {
         log.debug("Fetching template from database: {}", templateCode);
@@ -40,6 +44,9 @@ public class EmailTemplateProcessorService {
                         "Template not found: " + templateCode));
     }
 
+    /**
+     * Process template with variables
+     */
     public EmailNotificationRequest processTemplateByCode(
             String templateCode,
             Map<String, Object> variables,
@@ -47,7 +54,7 @@ public class EmailTemplateProcessorService {
         
         log.info("Processing template by code: {}", templateCode);
 
-        // Try cache first
+        // Cache will be used here
         EmailTemplate template = getTemplateByCode(templateCode);
 
         if (!template.isActive()) {
@@ -71,9 +78,45 @@ public class EmailTemplateProcessorService {
                 .build();
     }
 
+    /**
+     * Process file-based template
+     */
+    public String processFileTemplate(String templateName, Map<String, Object> variables) {
+        log.info("Processing file template: {}", templateName);
+
+        Context context = new Context();
+        context.setVariables(variables);
+
+        return fileTemplateEngine.process(templateName, context);
+    }
+
+    /**
+     * Validate template syntax
+     */
+    public boolean validateTemplate(String templateContent) {
+        try {
+            Context context = new Context();
+            stringTemplateEngine.process(templateContent, context);
+            return true;
+        } catch (Exception e) {
+            log.error("Template validation failed", e);
+            return false;
+        }
+    }
+
+    /**
+     * Evict template cache
+     */
     @CacheEvict(value = "emailTemplates", key = "#templateCode")
     public void evictTemplateCache(String templateCode) {
         log.info("Evicting template cache for: {}", templateCode);
     }
-
+    
+    /**
+     * Clear all template cache
+     */
+    @CacheEvict(value = "emailTemplates", allEntries = true)
+    public void clearAllTemplateCache() {
+        log.info("Clearing all template cache");
+    }
 }

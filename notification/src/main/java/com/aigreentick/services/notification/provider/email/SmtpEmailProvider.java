@@ -12,25 +12,55 @@ import com.aigreentick.services.notification.config.properties.SmtpProviderPrope
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.vavr.control.Try;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for sending email notifications with support for HTML templates,
- * attachments, CC/BCC recipients, and async processing.
+ * SMTP Email Provider with Circuit Breaker protection
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SmtpEmailProvider implements EmailProviderStrategy {
+    
     private final JavaMailSender mailSender;
     private final EmailProperties emailProperties;
     private final SmtpProviderProperties smtpProperties;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
 
+    @Override
     public void send(EmailNotificationRequest request) {
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("smtpProvider");
+        
+        Try.ofSupplier(CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
+            sendEmailInternal(request);
+            return null;
+        }))
+        .onFailure(throwable -> {
+            if (throwable instanceof CallNotPermittedException) {
+                log.error("SMTP Circuit Breaker is OPEN. Request rejected for: {}", request.getTo());
+            } else {
+                log.error("SMTP send failed for: {}", request.getTo(), throwable);
+            }
+        })
+        .getOrElseThrow(ex -> {
+            if (ex instanceof RuntimeException) {
+                return (RuntimeException) ex;
+            }
+            return new RuntimeException("SMTP send failed", ex);
+        });
+    }
 
+    /**
+     * Internal method to send email
+     */
+    private void sendEmailInternal(EmailNotificationRequest request) {
         try {
             MimeMessage message = buildMimeMessage(request);
             mailSender.send(message);
@@ -51,6 +81,18 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
         if (!smtpProperties.isEnabled()) {
             return false;
         }
+        
+        // Check circuit breaker state
+        try {
+            CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("smtpProvider");
+            if (circuitBreaker.getState() == CircuitBreaker.State.OPEN) {
+                log.warn("SMTP Circuit Breaker is OPEN - provider unavailable");
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Error checking circuit breaker state", e);
+        }
+        
         try {
             return mailSender != null;
         } catch (Exception e) {
@@ -118,5 +160,4 @@ public class SmtpEmailProvider implements EmailProviderStrategy {
 
         return message;
     }
-
 }
