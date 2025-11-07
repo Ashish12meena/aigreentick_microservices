@@ -55,5 +55,24 @@ public class EmailNotificationEvent {
     private LocalDateTime timestamp;
     
     private Map<String, String> metadata;
-  
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AttachmentData {
+        private String filename;
+        private byte[] content;
+        private String contentType;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InlineResourceData {
+        private String contentId;
+        private byte[] content;
+        private String contentType;
+    }
 }
