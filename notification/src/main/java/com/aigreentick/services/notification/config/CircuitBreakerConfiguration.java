@@ -1,3 +1,6 @@
+
+
+// CircuitBreakerConfiguration.java
 package com.aigreentick.services.notification.config;
 
 import java.time.Duration;
@@ -5,15 +8,20 @@ import java.time.Duration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.aigreentick.services.notification.config.properties.EmailProviderCircuitBreakerProperties;
+
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class CircuitBreakerConfiguration {
+    
+    private final EmailProviderCircuitBreakerProperties circuitBreakerProperties;
     
     @Bean
     public CircuitBreakerRegistry circuitBreakerRegistry() {
@@ -23,14 +31,18 @@ public class CircuitBreakerConfiguration {
     @Bean
     public CircuitBreaker smtpCircuitBreaker(CircuitBreakerRegistry registry) {
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
-                .slidingWindowSize(10)
-                .minimumNumberOfCalls(5)
-                .failureRateThreshold(50)
-                .slowCallRateThreshold(100)
-                .slowCallDurationThreshold(Duration.ofSeconds(5))
-                .waitDurationInOpenState(Duration.ofSeconds(30))
-                .permittedNumberOfCallsInHalfOpenState(3)
-                .automaticTransitionFromOpenToHalfOpenEnabled(true)
+                .slidingWindowSize(circuitBreakerProperties.getSlidingWindowSize())
+                .minimumNumberOfCalls(circuitBreakerProperties.getMinimumNumberOfCalls())
+                .failureRateThreshold(circuitBreakerProperties.getFailureRateThreshold())
+                .slowCallRateThreshold(circuitBreakerProperties.getSlowCallRateThreshold())
+                .slowCallDurationThreshold(
+                        Duration.ofMillis(circuitBreakerProperties.getSlowCallDurationThresholdMs()))
+                .waitDurationInOpenState(
+                        Duration.ofMillis(circuitBreakerProperties.getWaitDurationInOpenStateMs()))
+                .permittedNumberOfCallsInHalfOpenState(
+                        circuitBreakerProperties.getPermittedNumberOfCallsInHalfOpenState())
+                .automaticTransitionFromOpenToHalfOpenEnabled(
+                        circuitBreakerProperties.isAutomaticTransitionFromOpenToHalfOpenEnabled())
                 .build();
         
         CircuitBreaker circuitBreaker = registry.circuitBreaker("smtpProvider", config);
@@ -43,6 +55,11 @@ public class CircuitBreakerConfiguration {
                 .onError(event -> 
                         log.error("SMTP Circuit Breaker recorded error: {}", 
                                 event.getThrowable().getMessage()));
+        
+        log.info("SMTP Circuit Breaker initialized - slidingWindowSize: {}, minimumCalls: {}, failureThreshold: {}%",
+                circuitBreakerProperties.getSlidingWindowSize(),
+                circuitBreakerProperties.getMinimumNumberOfCalls(),
+                circuitBreakerProperties.getFailureRateThreshold());
         
         return circuitBreaker;
     }

@@ -146,6 +146,7 @@ public class RedisRateLimiterService {
     /**
      * Simple counter-based check (fallback if Lua script fails)
      */
+    @SuppressWarnings("unused")
     private boolean checkLimitSimple(String key, int maxRequests) {
         String redisKey = RATE_LIMIT_KEY_PREFIX + key;
         
