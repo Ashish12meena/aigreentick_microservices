@@ -1,6 +1,6 @@
 package com.aigreentick.services.notification.kafka.producer;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +49,7 @@ public class KafkaAuditProducer {
                 .retryCount(notification.getRetryCount())
                 .processingTimeMs(processingTimeMs)
                 .errorMessage(errorMessage)
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .userId(notification.getUserId())
                 .metadata(buildMetadata(notification))
                 .build();

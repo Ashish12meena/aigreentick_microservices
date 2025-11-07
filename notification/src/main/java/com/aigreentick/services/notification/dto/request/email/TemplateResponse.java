@@ -1,6 +1,6 @@
 package com.aigreentick.services.notification.dto.request.email;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -20,7 +20,7 @@ public class TemplateResponse {
     private String body;
     private boolean active;
     private List<String> variables;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     
 }

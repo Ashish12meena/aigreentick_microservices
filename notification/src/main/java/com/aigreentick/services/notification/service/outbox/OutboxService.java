@@ -1,7 +1,7 @@
 // src/main/java/com/aigreentick/services/notification/service/outbox/OutboxService.java
 package com.aigreentick.services.notification.service.outbox;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class OutboxService {
                     .payload(payload)
                     .status(OutboxEventStatus.PENDING)
                     .retryCount(0)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(Instant.now())
                     .build();
             
             OutboxEvent saved = outboxRepository.save(outboxEvent);
@@ -73,7 +73,7 @@ public class OutboxService {
     public void markAsPublished(String eventId) {
         outboxRepository.findById(eventId).ifPresent(event -> {
             event.setStatus(OutboxEventStatus.PUBLISHED);
-            event.setUpdatedAt(LocalDateTime.now());
+            event.setUpdatedAt(Instant.now());
             outboxRepository.save(event);
             log.debug("Marked outbox event as published: {}", eventId);
         });
@@ -88,7 +88,7 @@ public class OutboxService {
             event.setStatus(OutboxEventStatus.FAILED);
             event.setRetryCount(event.getRetryCount() + 1);
             event.setErrorMessage(errorMessage);
-            event.setUpdatedAt(LocalDateTime.now());
+            event.setUpdatedAt(Instant.now());
             outboxRepository.save(event);
             log.warn("Marked outbox event as failed: {}", eventId);
         });

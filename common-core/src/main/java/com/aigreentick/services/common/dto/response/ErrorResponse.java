@@ -1,6 +1,6 @@
 package com.aigreentick.services.common.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-     private LocalDateTime timestamp;
+    private Instant timestamp;
     private int status;
     private String error;
     private String code; // Unique error code

@@ -1,7 +1,7 @@
 // src/main/java/com/aigreentick/services/notification/service/dlq/DlqAdminService.java
 package com.aigreentick.services.notification.service.dlq;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -81,7 +81,7 @@ public class DlqAdminService {
             dlqMessage.setProcessed(true);
             dlqMessage.setReprocessedBy(request.getRequestedBy());
             dlqMessage.setReprocessingNotes(request.getNotes());
-            dlqMessage.setUpdatedAt(LocalDateTime.now());
+            dlqMessage.setUpdatedAt(Instant.now());
             
             dlqRepository.save(dlqMessage);
             
@@ -120,7 +120,7 @@ public class DlqAdminService {
         dlqMessage.setProcessed(true);
         dlqMessage.setReprocessedBy(requestedBy);
         dlqMessage.setReprocessingNotes(notes != null ? notes : "Manually marked as processed");
-        dlqMessage.setUpdatedAt(LocalDateTime.now());
+        dlqMessage.setUpdatedAt(Instant.now());
         
         dlqRepository.save(dlqMessage);
         

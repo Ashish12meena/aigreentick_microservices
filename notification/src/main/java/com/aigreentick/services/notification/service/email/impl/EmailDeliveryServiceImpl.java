@@ -1,7 +1,7 @@
 // src/main/java/com/aigreentick/services/notification/service/email/impl/EmailDeliveryServiceImpl.java
 package com.aigreentick.services.notification.service.email.impl;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
@@ -92,7 +92,7 @@ public class EmailDeliveryServiceImpl {
             provider.send(request);
 
             notification.setStatus(NotificationStatus.SENT);
-            notification.setCreatedAt(LocalDateTime.now());
+            notification.setCreatedAt(Instant.now());
 
             log.info("Email delivered successfully to: {} via {}",
                     request.getTo(),
@@ -101,7 +101,7 @@ public class EmailDeliveryServiceImpl {
         } catch (Exception e) {
             log.error("Failed to deliver email via provider: {}", provider.getProviderType(), e);
             notification.setStatus(NotificationStatus.FAILED);
-            notification.setCreatedAt(LocalDateTime.now());
+            notification.setCreatedAt(Instant.now());
             errorMessage = e.getMessage();
             throw new NotificationSendException("Failed to deliver email", e);
         } finally {
@@ -173,7 +173,7 @@ public class EmailDeliveryServiceImpl {
                 .processingTimeMs(processingTime)
                 .errorMessage(errorMessage)
                 .userId(notification.getUserId())
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -197,8 +197,8 @@ public class EmailDeliveryServiceImpl {
                 .status(NotificationStatus.FAILED)
                 .providerType(EmailProviderType.SMTP)
                 .retryCount(emailProperties.getRetry().getMaxAttempts())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
         EmailNotification saved = emailNotificationService.save(failedNotification);

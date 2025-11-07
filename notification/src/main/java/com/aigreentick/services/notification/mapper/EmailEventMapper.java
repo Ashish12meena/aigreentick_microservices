@@ -1,6 +1,6 @@
 package com.aigreentick.services.notification.mapper;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -51,7 +51,7 @@ public class EmailEventMapper {
                 .retryCount(0)
                 .userId(userId)
                 .sourceService(sourceService != null ? sourceService : "notification-service")
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .build();
     }
 

@@ -1,7 +1,7 @@
 // src/main/java/com/aigreentick/services/notification/kafka/consumer/DlqConsumer.java
 package com.aigreentick.services.notification.kafka.consumer;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -60,7 +60,7 @@ public class DlqConsumer {
                     .errorReason(event.getMetadata() != null ? 
                             event.getMetadata().get("dlqReason") : "Unknown")
                     .processed(false)
-                    .createdAt(LocalDateTime.now()) // ← ADDED: Set creation timestamp
+                    .createdAt(Instant.now()) // ← ADDED: Set creation timestamp
                     .build();
 
             dlqRepository.save(dlqMessage);

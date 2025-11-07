@@ -12,7 +12,7 @@ import com.aigreentick.services.notification.repository.EmailTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,7 +40,7 @@ public class EmailTemplateService {
                 .body(request.getBody())
                 .variables(request.getVariables())
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
         
         template = templateRepository.save(template);
@@ -62,7 +62,7 @@ public class EmailTemplateService {
         template.setSubject(request.getSubject());
         template.setBody(request.getBody());
         template.setVariables(request.getVariables());
-        template.setUpdatedAt(LocalDateTime.now());
+        template.setUpdatedAt(Instant.now());
         
         template = templateRepository.save(template);
         
@@ -113,7 +113,7 @@ public class EmailTemplateService {
                         "Template not found: " + id));
         
         template.setActive(true);
-        template.setUpdatedAt(LocalDateTime.now());
+        template.setUpdatedAt(Instant.now());
         template = templateRepository.save(template);
         
         log.info("Template activated: {}", id);
@@ -127,7 +127,7 @@ public class EmailTemplateService {
                         "Template not found: " + id));
         
         template.setActive(false);
-        template.setUpdatedAt(LocalDateTime.now());
+        template.setUpdatedAt(Instant.now());
         template = templateRepository.save(template);
         
         log.info("Template deactivated: {}", id);

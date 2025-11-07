@@ -1,6 +1,6 @@
 package com.aigreentick.services.notification.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import com.aigreentick.services.notification.enums.NotificationStatus;
@@ -25,6 +25,6 @@ public class EmailNotificationResponse {
     private Integer retryCount;
     private String errorMessage;
     private Long processingTimeMs;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

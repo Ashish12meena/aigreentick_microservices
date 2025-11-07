@@ -1,12 +1,11 @@
 package com.aigreentick.services.notification.kafka.event;
 
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import com.aigreentick.services.notification.enums.email.EmailPriority;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,8 +50,7 @@ public class EmailNotificationEvent {
     
     private String sourceService;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime timestamp;
+    private Instant timestamp;
     
     private Map<String, String> metadata;
     

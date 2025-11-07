@@ -1,15 +1,15 @@
 package com.aigreentick.services.common.model.feature;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface Auditable {
-    LocalDateTime getCreatedAt();
-    LocalDateTime getUpdatedAt();
+    Instant getCreatedAt();
+    Instant getUpdatedAt();
     Long getCreatedByUserId();
     Long getUpdatedByUserId();
 
-    void setCreatedAt(LocalDateTime createdAt);
-    void setUpdatedAt(LocalDateTime updatedAt);
+    void setCreatedAt(Instant createdAt);
+    void setUpdatedAt(Instant updatedAt);
     void setCreatedByUserId(Long id);
     void setUpdatedByUserId(Long id);
 }

@@ -1,5 +1,6 @@
 package com.aigreentick.services.notification.kafka.producer;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +34,7 @@ public class KafkaProducerService {
         }
         
         if (event.getTimestamp() == null) {
-            event.setTimestamp(LocalDateTime.now());
+            event.setTimestamp(Instant.now());
         }
         
         String topicName = topicProperties.getTopics().getEmailNotification();

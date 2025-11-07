@@ -1,6 +1,7 @@
 package com.aigreentick.services.common.model.base;
 
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 
 import com.aigreentick.services.common.model.feature.Auditable;
 import com.aigreentick.services.common.model.feature.SoftDeletable;
@@ -30,9 +31,9 @@ public abstract class JpaBaseEntity extends BaseEntity<Long>
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     private Long createdByUserId;
 
@@ -40,23 +41,22 @@ public abstract class JpaBaseEntity extends BaseEntity<Long>
 
     private boolean isDeleted;
 
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     public void markDeleted() {
         this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = Instant.now();
     }
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = Instant.now();
     }
-
-
 }

@@ -1,10 +1,10 @@
 package com.aigreentick.services.common.model.feature;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface SoftDeletable {
     boolean isDeleted();
-    LocalDateTime getDeletedAt();
+    Instant getDeletedAt();
     void markDeleted();
 }
 

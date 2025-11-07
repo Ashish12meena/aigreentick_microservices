@@ -1,11 +1,10 @@
 package com.aigreentick.services.notification.kafka.event;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import com.aigreentick.services.notification.enums.NotificationChannel;
 import com.aigreentick.services.notification.enums.NotificationStatus;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,8 +41,7 @@ public class NotificationAuditEvent {
     
     private String errorCode;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime timestamp;
+    private Instant timestamp;
     
     private String userId;
     
