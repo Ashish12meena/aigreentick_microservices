@@ -1,6 +1,7 @@
 # Kafka Configuration
 kafka:
   bootstrap-servers: localhost:9092
+  enabled: false
 
 # Producer Configuration
   producer:
@@ -13,7 +14,7 @@ kafka:
     compression-type: snappy
     linger-ms: 10
     max-in-flight-requests-per-connection: 5
-    enable-idempotence: true
+    enable-idempotence: false
     properties:
       spring.json.add.type.headers: false
 
@@ -61,5 +62,5 @@ kafka:
     multiplier: 2.0
   
   dlq:
-    enabled: true
+    enabled: false
     retention-ms: 604800000 # 7 days

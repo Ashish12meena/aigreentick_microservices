@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -33,9 +34,15 @@ import com.aigreentick.services.notification.kafka.event.NotificationAuditEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
+@ConditionalOnProperty(
+    prefix = "kafka",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = false  
+)
 public class KafkaConfiguration {
 
     private final KafkaTopicProperties topicProperties;
