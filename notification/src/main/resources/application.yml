@@ -7,7 +7,6 @@ spring:
       - eureka
       - redis
       - notification-provider
-      - kafka
   application:
     name: notifcation-service
 
@@ -46,14 +45,6 @@ batch:
     queue-capacity: ${BATCH_WRITER_QUEUE:1000}
     flush-interval-ms: ${BATCH_WRITER_FLUSH:1000}
 
-# ============================================
-# OUTBOX CONFIGURATION
-# ============================================
-outbox:
-  publisher:
-    enabled: ${OUTBOX_PUBLISHER_ENABLED:false}
-    poll-interval-ms: ${OUTBOX_POLL_INTERVAL:5000}
-    batch-size: ${OUTBOX_BATCH_SIZE:100}
 
 
 
