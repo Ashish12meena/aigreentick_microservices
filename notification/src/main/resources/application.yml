@@ -20,21 +20,21 @@ server:
 # ============================================
 async:
   email:
-    enabled: ${ASYNC_EMAIL_ENABLED:false}
-    core-pool-size: ${ASYNC_EMAIL_CORE_POOL_SIZE:5}
-    max-pool-size: ${ASYNC_EMAIL_MAX_POOL_SIZE:10}
-    queue-capacity: ${ASYNC_EMAIL_QUEUE_CAPACITY:100}
-    thread-name-prefix: ${ASYNC_EMAIL_THREAD_PREFIX:email-async-}
-    keep-alive-seconds: ${ASYNC_EMAIL_KEEP_ALIVE:60}
-    await-termination-seconds: ${ASYNC_EMAIL_AWAIT_TERMINATION:60}
+    enabled: true
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+    thread-name-prefix: email-async-
+    keep-alive-seconds: 60
+    await-termination-seconds: 60
 
   push:
-    enabled: ${ASYNC_PUSH_ENABLED:false}
-    core-pool-size: ${ASYNC_PUSH_CORE_POOL_SIZE:5}
-    max-pool-size: ${ASYNC_PUSH_MAX_POOL_SIZE:10}
-    queue-capacity: ${ASYNC_PUSH_QUEUE_CAPACITY:100}
-    thread-name-prefix: ${ASYNC_PUSH_THREAD_PREFIX:push-async-}
-    keep-alive-seconds: ${ASYNC_PUSH_KEEP_ALIVE:60}
+    enabled: false
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+    thread-name-prefix: push-async-
+    keep-alive-seconds: 60
 
 # ============================================
 # BATCH WRITER CONFIGURATION
@@ -57,44 +57,3 @@ outbox:
 
 
 
-# ============================================
-# RESILIENCE4J CONFIGURATION
-# ============================================
-resilience4j:
-  circuitbreaker:
-    instances:
-      emailProvider:
-        register-health-indicator: true
-        sliding-window-size: ${CIRCUIT_BREAKER_SLIDING_WINDOW:10}
-        minimum-number-of-calls: ${CIRCUIT_BREAKER_MIN_CALLS:5}
-        permitted-number-of-calls-in-half-open-state: ${CIRCUIT_BREAKER_HALF_OPEN_CALLS:3}
-        automatic-transition-from-open-to-half-open-enabled: true
-        wait-duration-in-open-state: ${CIRCUIT_BREAKER_WAIT_DURATION:60000}
-        failure-rate-threshold: ${CIRCUIT_BREAKER_FAILURE_RATE:50}
-        slow-call-rate-threshold: ${CIRCUIT_BREAKER_SLOW_CALL_RATE:50}
-        slow-call-duration-threshold: ${CIRCUIT_BREAKER_SLOW_CALL_DURATION:10000}
-  
-  retry:
-    instances:
-      emailProvider:
-        max-attempts: ${email.retry.max-attempts}
-        wait-duration: ${email.retry.initial-delay-ms}
-        exponential-backoff-multiplier: ${email.retry.multiplier}
-        exponential-max-wait-duration: ${email.retry.max-delay-ms}
-
-  ratelimiter:
-    instances:
-      emailRateLimiter:
-        limit-for-period: 1000
-        limit-refresh-period: 1m
-        timeout-duration: 0s
-      userEmailRateLimiter:
-        limit-for-period: 60
-        limit-refresh-period: 1m
-        timeout-duration: 0s
-  
-  timelimiter:
-    instances:
-      emailProvider:
-        timeout-duration: ${TIME_LIMITER_TIMEOUT:30s}
-        cancel-running-future: true

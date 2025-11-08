@@ -3,9 +3,11 @@ package com.aigreentick.services.notification.config.properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import com.aigreentick.services.notification.enums.email.EmailProviderType;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Configuration
@@ -17,6 +19,9 @@ public class EmailProperties {
     private String name = "AI GreenTick";
 
     private String encoding = "UTF-8";
+
+    @NotNull
+    private EmailProviderType active = EmailProviderType.SMTP;
 
     private RetryProperties retry = new RetryProperties();
     private EmailTemplateProperties template;

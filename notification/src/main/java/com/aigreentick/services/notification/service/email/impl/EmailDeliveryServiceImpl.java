@@ -13,12 +13,10 @@ import com.aigreentick.services.notification.dto.request.email.EmailNotification
 import com.aigreentick.services.notification.enums.NotificationStatus;
 import com.aigreentick.services.notification.enums.email.EmailProviderType;
 import com.aigreentick.services.notification.exceptions.NotificationSendException;
-import com.aigreentick.services.notification.kafka.event.NotificationAuditEvent;
 import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.provider.email.EmailProviderStrategy;
 import com.aigreentick.services.notification.provider.selector.EmailProviderSelector;
 import com.aigreentick.services.notification.service.batch.BatchNotificationWriter;
-import com.aigreentick.services.notification.service.outbox.OutboxService;
 
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +29,6 @@ public class EmailDeliveryServiceImpl {
     private final EmailProviderSelector providerSelector;
     private final EmailNotificationServiceImpl emailNotificationService;
     private final EmailProperties emailProperties;
-    private final OutboxService outboxService;
     private final BatchNotificationWriter batchWriter;
 
     @Transactional
@@ -59,15 +56,15 @@ public class EmailDeliveryServiceImpl {
         }
     }
 
-    public EmailNotification deliverWithProvider(EmailNotificationRequest request, 
-                                                   EmailProviderType providerType) {
+    public EmailNotification deliverWithProvider(EmailNotificationRequest request,
+            EmailProviderType providerType) {
         log.info("Delivering email with specific provider: {}", providerType);
         EmailProviderStrategy provider = providerSelector.getProvider(providerType);
         return executeDelivery(request, provider, null);
     }
 
     private EmailNotification createNotificationRecord(EmailNotificationRequest request,
-                                                        EmailProviderType providerType) {
+            EmailProviderType providerType) {
         return EmailNotification.builder()
                 .to(request.getTo())
                 .from(emailProperties.getFromEmail())
@@ -81,12 +78,10 @@ public class EmailDeliveryServiceImpl {
                 .build();
     }
 
-    private EmailNotification executeDelivery(EmailNotificationRequest request, 
-                                               EmailProviderStrategy provider,
-                                               String eventId) {
-        long startTime = System.currentTimeMillis();
+    private EmailNotification executeDelivery(EmailNotificationRequest request,
+            EmailProviderStrategy provider,
+            String eventId) {
         EmailNotification notification = createNotificationRecord(request, provider.getProviderType());
-        String errorMessage = null;
 
         try {
             provider.send(request);
@@ -102,17 +97,12 @@ public class EmailDeliveryServiceImpl {
             log.error("Failed to deliver email via provider: {}", provider.getProviderType(), e);
             notification.setStatus(NotificationStatus.FAILED);
             notification.setCreatedAt(Instant.now());
-            errorMessage = e.getMessage();
             throw new NotificationSendException("Failed to deliver email", e);
         } finally {
-            // Use batch writer for async persistence
-            EmailNotification savedNotification = persistNotificationAsync(notification);
-            
-            // Create audit event in outbox (transactional with notification save)
-            saveAuditEventToOutbox(savedNotification, eventId, 
-                    System.currentTimeMillis() - startTime, errorMessage);
+            persistNotificationAsync(notification);
+
         }
-        
+
         return notification;
     }
 
@@ -123,89 +113,18 @@ public class EmailDeliveryServiceImpl {
         try {
             // Try batch writer first
             boolean enqueued = batchWriter.enqueue(notification);
-            
+
             if (!enqueued) {
                 // Fallback to synchronous save if queue is full
                 return emailNotificationService.save(notification);
             }
-            
+
             return notification;
-            
+
         } catch (Exception e) {
             log.error("Error enqueueing notification for batch write, saving synchronously", e);
             return emailNotificationService.save(notification);
         }
     }
 
-    /**
-     * Save audit event to outbox (async via scheduled publisher)
-     */
-    private void saveAuditEventToOutbox(EmailNotification notification, 
-                                         String eventId, 
-                                         Long processingTime,
-                                         String errorMessage) {
-        try {
-            NotificationAuditEvent auditEvent = buildAuditEvent(
-                    notification, eventId, processingTime, errorMessage);
-            
-            // Save to outbox - will be published asynchronously
-            outboxService.saveAuditEvent(auditEvent);
-            
-        } catch (Exception e) {
-            log.error("Error saving audit event to outbox for notification: {}. " +
-                    "This is non-critical.", notification.getId(), e);
-        }
-    }
-
-    private NotificationAuditEvent buildAuditEvent(EmailNotification notification,
-                                                     String eventId,
-                                                     Long processingTime,
-                                                     String errorMessage) {
-        return NotificationAuditEvent.builder()
-                .notificationId(notification.getId())
-                .eventId(eventId)
-                .status(notification.getStatus())
-                .providerType(notification.getProviderType() != null ? 
-                        notification.getProviderType().name() : null)
-                .recipient(notification.getTo() != null && !notification.getTo().isEmpty() ? 
-                        notification.getTo().get(0) : null)
-                .retryCount(notification.getRetryCount())
-                .processingTimeMs(processingTime)
-                .errorMessage(errorMessage)
-                .userId(notification.getUserId())
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    @SuppressWarnings("unused")
-    private EmailNotification deliverFallback(EmailNotificationRequest request,
-                                               String eventId,
-                                               Exception exception) {
-        long startTime = System.currentTimeMillis();
-        
-        log.error("Email delivery failed after all retry attempts for: {}. Error: {}",
-                request.getTo(),
-                exception.getMessage());
-
-        EmailNotification failedNotification = EmailNotification.builder()
-                .to(request.getTo())
-                .from(emailProperties.getFromEmail())
-                .cc(request.getCc())
-                .bcc(request.getBcc())
-                .subject(request.getSubject())
-                .body(request.getBody())
-                .status(NotificationStatus.FAILED)
-                .providerType(EmailProviderType.SMTP)
-                .retryCount(emailProperties.getRetry().getMaxAttempts())
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-
-        EmailNotification saved = emailNotificationService.save(failedNotification);
-        
-        saveAuditEventToOutbox(saved, eventId, 
-                System.currentTimeMillis() - startTime, exception.getMessage());
-        
-        return saved;
-    }
 }

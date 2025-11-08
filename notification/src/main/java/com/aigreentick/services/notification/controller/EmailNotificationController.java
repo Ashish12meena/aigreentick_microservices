@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,7 +17,6 @@ import com.aigreentick.services.notification.dto.request.email.EmailNotification
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.dto.request.email.SendTemplatedEmailRequest;
 import com.aigreentick.services.notification.dto.response.EmailNotificationResponse;
-import com.aigreentick.services.notification.enums.email.KafkaEmailResponse;
 import com.aigreentick.services.notification.service.email.impl.EmailOrchestratorServiceImpl;
 
 import jakarta.validation.Valid;
@@ -64,30 +62,6 @@ public class EmailNotificationController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
-    /**
-     * Send email via Kafka (recommended for high volume)
-     */
-    @PostMapping("/send/kafka")
-    public ResponseEntity<KafkaEmailResponse> sendEmailViaKafka(
-            @Valid @RequestBody EmailNotificationRequest request,
-            @RequestHeader(value = "X-User-Id", required = false) String userId,
-            @RequestHeader(value = "X-Source-Service", required = false) String sourceService) {
-        
-        log.info("Received request to send email via Kafka to: {}", request.getTo());
-
-        CompletableFuture<String> eventIdFuture = 
-                emailOrchestratorservice.sendEmailViaKafka(request, userId, sourceService);
-
-        String eventId = eventIdFuture.join();
-        
-        KafkaEmailResponse response = KafkaEmailResponse.builder()
-                .eventId(eventId)
-                .status("QUEUED")
-                .message("Email notification queued successfully in Kafka")
-                .build();
-
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
-    }
 
     /**
      * Send templated email synchronously
@@ -102,31 +76,6 @@ public class EmailNotificationController {
         EmailNotificationResponse response = emailOrchestratorservice.sendTemplatedEmail(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /**
-     * Send templated email via Kafka
-     */
-    @PostMapping("/send/templated/kafka")
-    public ResponseEntity<KafkaEmailResponse> sendTemplatedEmailViaKafka(
-            @Valid @RequestBody SendTemplatedEmailRequest request,
-            @RequestHeader(value = "X-User-Id", required = false) String userId) {
-        
-        log.info("Received request to send templated email via Kafka to: {} with template: {}",
-                request.getTo(), request.getTemplateCode());
-
-        CompletableFuture<String> eventIdFuture = 
-                emailOrchestratorservice.sendTemplatedEmailViaKafka(request, userId);
-
-        String eventId = eventIdFuture.join();
-        
-        KafkaEmailResponse response = KafkaEmailResponse.builder()
-                .eventId(eventId)
-                .status("QUEUED")
-                .message("Templated email notification queued successfully in Kafka")
-                .build();
-
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
 }
