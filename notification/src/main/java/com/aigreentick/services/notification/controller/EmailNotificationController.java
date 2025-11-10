@@ -1,7 +1,6 @@
 package com.aigreentick.services.notification.controller;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationControllerRequest;
-import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
 import com.aigreentick.services.notification.dto.request.email.SendTemplatedEmailRequest;
 import com.aigreentick.services.notification.dto.response.EmailNotificationResponse;
 import com.aigreentick.services.notification.service.email.impl.EmailOrchestratorServiceImpl;
@@ -51,15 +49,17 @@ public class EmailNotificationController {
      * Send email asynchronously (legacy thread-pool based)
      */
     @PostMapping("/send/async")
-    public ResponseEntity<CompletableFuture<EmailNotificationResponse>> sendEmailAsync(
-            @Valid @RequestBody EmailNotificationRequest request) {
+    public ResponseEntity<EmailNotificationResponse> sendEmailAsync(
+          @RequestPart("request") @Valid EmailNotificationControllerRequest request,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachmentFiles,
+            @RequestPart(value = "inline", required = false) List<MultipartFile> inlineResources) {
         
-        log.info("Received request to send email asynchronously to: {}", request.getTo());
+        log.info("Received request to send email to: {}", request.getTo());
 
-        CompletableFuture<EmailNotificationResponse> response = 
-                emailOrchestratorservice.sendEmailAsync(request);
-
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+        EmailNotificationResponse response = emailOrchestratorservice.sendEmail(
+                request, attachmentFiles, inlineResources);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 
