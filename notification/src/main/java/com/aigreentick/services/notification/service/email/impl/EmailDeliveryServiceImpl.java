@@ -1,8 +1,6 @@
-// src/main/java/com/aigreentick/services/notification/service/email/impl/EmailDeliveryServiceImpl.java
 package com.aigreentick.services.notification.service.email.impl;
 
 import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -26,45 +24,194 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class EmailDeliveryServiceImpl {
+    
     private final EmailProviderSelector providerSelector;
     private final EmailNotificationServiceImpl emailNotificationService;
     private final EmailProperties emailProperties;
     private final BatchNotificationWriter batchWriter;
 
+    // ==================== SYNCHRONOUS DELIVERY ====================
+
+    /**
+     * Deliver email synchronously with retry
+     */
     @Transactional
     @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
     public EmailNotification deliver(EmailNotificationRequest request) {
-        return deliver(request, null);
-    }
-
-    @Transactional
-    @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
-    public EmailNotification deliver(EmailNotificationRequest request, String eventId) {
         EmailProviderStrategy provider = providerSelector.selectProvider();
-        return executeDelivery(request, provider, eventId);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<EmailNotification> deliverAsync(EmailNotificationRequest request) {
-        log.info("Async email delivery started for: {}", request.getTo());
-        try {
-            EmailNotification result = deliver(request);
-            return CompletableFuture.completedFuture(result);
-        } catch (Exception e) {
-            log.error("Async email delivery failed for: {}", request.getTo(), e);
-            return CompletableFuture.failedFuture(e);
-        }
-    }
-
-    public EmailNotification deliverWithProvider(EmailNotificationRequest request,
-            EmailProviderType providerType) {
-        log.info("Delivering email with specific provider: {}", providerType);
-        EmailProviderStrategy provider = providerSelector.getProvider(providerType);
         return executeDelivery(request, provider, null);
     }
 
-    private EmailNotification createNotificationRecord(EmailNotificationRequest request,
+    // ==================== ASYNCHRONOUS DELIVERY ====================
+
+    /**
+     * Deliver email asynchronously (fire-and-forget)
+     * 
+     * This method:
+     * 1. Runs in background thread pool
+     * 2. Updates notification status in database
+     * 3. Does NOT block the caller
+     * 
+     * @param request Email request
+     * @param notificationId Pre-created notification ID
+     */
+    @Async("emailTaskExecutor")
+    @Retry(name = "emailRetry", fallbackMethod = "deliverAsyncFallback")
+    public void deliverAsync(EmailNotificationRequest request, String notificationId) {
+        log.info("Starting async delivery for notification: {}", notificationId);
+        
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // Update status to PROCESSING
+            updateNotificationStatus(notificationId, NotificationStatus.PROCESSING);
+
+            // Select provider and send
+            EmailProviderStrategy provider = providerSelector.selectProvider();
+            provider.send(request);
+
+            // Update to SENT
+            long processingTime = System.currentTimeMillis() - startTime;
+            updateNotificationSuccess(notificationId, provider.getProviderType(), processingTime);
+
+            log.info("Async email delivered successfully in {}ms for notification: {}", 
+                    processingTime, notificationId);
+
+        } catch (Exception e) {
+            log.error("Async email delivery failed for notification: {}", notificationId, e);
+            updateNotificationFailure(notificationId, e.getMessage());
+            throw new NotificationSendException("Async email delivery failed", e);
+        }
+    }
+
+    /**
+     * Fallback for async delivery failures
+     */
+    @SuppressWarnings("unused")
+    private void deliverAsyncFallback(EmailNotificationRequest request, String notificationId, 
+            Exception ex) {
+        log.error("Async delivery fallback triggered for notification: {}. Error: {}", 
+                notificationId, ex.getMessage());
+        
+        updateNotificationFailure(notificationId, 
+                "All retry attempts failed: " + ex.getMessage());
+    }
+
+    // ==================== NOTIFICATION MANAGEMENT ====================
+
+    /**
+     * Create notification record in PENDING status
+     * Called before async processing
+     */
+    public EmailNotification createPendingNotification(EmailNotificationRequest request) {
+        EmailNotification notification = EmailNotification.builder()
+                .to(request.getTo())
+                .from(emailProperties.getFromEmail())
+                .cc(request.getCc())
+                .bcc(request.getBcc())
+                .subject(request.getSubject())
+                .body(request.getBody())
+                .status(NotificationStatus.PENDING)
+                .retryCount(0)
+                .createdAt(Instant.now())
+                .build();
+
+        notification = emailNotificationService.save(notification);
+        log.info("Created PENDING notification: {}", notification.getId());
+        
+        return notification;
+    }
+
+    /**
+     * Update notification status
+     */
+    private void updateNotificationStatus(String notificationId, NotificationStatus status) {
+        emailNotificationService.findOptionalById(notificationId).ifPresent(notification -> {
+            notification.setStatus(status);
+            notification.setUpdatedAt(Instant.now());
+            emailNotificationService.save(notification);
+        });
+    }
+
+    /**
+     * Update notification on successful delivery
+     */
+    private void updateNotificationSuccess(String notificationId, 
+            EmailProviderType providerType, long processingTimeMs) {
+        
+        emailNotificationService.findOptionalById(notificationId).ifPresent(notification -> {
+            notification.setStatus(NotificationStatus.SENT);
+            notification.setProviderType(providerType);
+            notification.setUpdatedAt(Instant.now());
+            emailNotificationService.save(notification);
+        });
+    }
+
+    /**
+     * Update notification on failure
+     */
+    private void updateNotificationFailure(String notificationId, String errorMessage) {
+        emailNotificationService.findOptionalById(notificationId).ifPresent(notification -> {
+            notification.setStatus(NotificationStatus.FAILED);
+            notification.setUpdatedAt(Instant.now());
+            
+            Integer retryCount = notification.getRetryCount();
+            notification.setRetryCount(retryCount != null ? retryCount + 1 : 1);
+            
+            emailNotificationService.save(notification);
+        });
+    }
+
+    // ==================== PRIVATE HELPERS ====================
+
+    /**
+     * Execute delivery (used by synchronous flow)
+     */
+    private EmailNotification executeDelivery(
+            EmailNotificationRequest request,
+            EmailProviderStrategy provider,
+            String existingNotificationId) {
+
+        EmailNotification notification;
+        
+        if (existingNotificationId != null) {
+            // Use existing notification record
+            notification = emailNotificationService.findOptionalById(existingNotificationId)
+                    .orElseThrow(() -> new NotificationSendException(
+                            "Notification not found: " + existingNotificationId));
+        } else {
+            // Create new notification record
+            notification = createNotificationRecord(request, provider.getProviderType());
+        }
+
+        try {
+            provider.send(request);
+
+            notification.setStatus(NotificationStatus.SENT);
+            notification.setUpdatedAt(Instant.now());
+
+            log.info("Email delivered successfully to: {} via {}",
+                    request.getTo(), provider.getProviderType());
+
+        } catch (Exception e) {
+            log.error("Failed to deliver email via provider: {}", provider.getProviderType(), e);
+            notification.setStatus(NotificationStatus.FAILED);
+            notification.setUpdatedAt(Instant.now());
+            throw new NotificationSendException("Failed to deliver email", e);
+        } finally {
+            persistNotificationAsync(notification);
+        }
+
+        return notification;
+    }
+
+    /**
+     * Create notification record (for sync flow)
+     */
+    private EmailNotification createNotificationRecord(
+            EmailNotificationRequest request,
             EmailProviderType providerType) {
+        
         return EmailNotification.builder()
                 .to(request.getTo())
                 .from(emailProperties.getFromEmail())
@@ -75,56 +222,43 @@ public class EmailDeliveryServiceImpl {
                 .status(NotificationStatus.PROCESSING)
                 .providerType(providerType)
                 .retryCount(0)
+                .createdAt(Instant.now())
                 .build();
     }
 
-    private EmailNotification executeDelivery(EmailNotificationRequest request,
-            EmailProviderStrategy provider,
-            String eventId) {
-        EmailNotification notification = createNotificationRecord(request, provider.getProviderType());
-
-        try {
-            provider.send(request);
-
-            notification.setStatus(NotificationStatus.SENT);
-            notification.setCreatedAt(Instant.now());
-
-            log.info("Email delivered successfully to: {} via {}",
-                    request.getTo(),
-                    provider.getProviderType());
-
-        } catch (Exception e) {
-            log.error("Failed to deliver email via provider: {}", provider.getProviderType(), e);
-            notification.setStatus(NotificationStatus.FAILED);
-            notification.setCreatedAt(Instant.now());
-            throw new NotificationSendException("Failed to deliver email", e);
-        } finally {
-            persistNotificationAsync(notification);
-
-        }
-
-        return notification;
-    }
-
     /**
-     * Persist notification using batch writer (non-blocking)
+     * Persist notification using batch writer
      */
     private EmailNotification persistNotificationAsync(EmailNotification notification) {
         try {
-            // Try batch writer first
             boolean enqueued = batchWriter.enqueue(notification);
-
+            
             if (!enqueued) {
-                // Fallback to synchronous save if queue is full
                 return emailNotificationService.save(notification);
             }
-
+            
             return notification;
 
         } catch (Exception e) {
-            log.error("Error enqueueing notification for batch write, saving synchronously", e);
+            log.error("Error enqueueing notification, saving synchronously", e);
             return emailNotificationService.save(notification);
         }
     }
 
+    /**
+     * Fallback for synchronous delivery
+     */
+    @SuppressWarnings("unused")
+    private EmailNotification deliverFallback(EmailNotificationRequest request, Exception ex) {
+        log.error("All retry attempts exhausted. Creating FAILED notification. Error: {}", 
+                ex.getMessage());
+        
+        EmailNotification notification = createNotificationRecord(
+                request, 
+                EmailProviderType.SMTP);
+        
+        notification.setStatus(NotificationStatus.FAILED);
+        
+        return emailNotificationService.save(notification);
+    }
 }
