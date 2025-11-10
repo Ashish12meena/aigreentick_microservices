@@ -14,10 +14,18 @@ eureka:
     lease-expiration-duration-in-seconds: 90
     metadata-map:
       version: ${application.version:1.0.0}
-      region: ${REGION:default}
+      region: ${REGION:default
 
 # ============================================
-# FEIGN CLIENT CONFIGURATION
+# AUDIT SERVICE CONFIGURATION
+# ============================================
+audit:
+  enabled: ${AUDIT_ENABLED:true}
+  service:
+    url: ${AUDIT_SERVICE_URL:http://localhost:8010}
+
+# ============================================
+# FEIGN CLIENT CONFIGURATION̥
 # ============================================
 feign:
   client:

@@ -1,6 +1,7 @@
 package com.aigreentick.services.notification.service.email.impl;
 
 import java.time.Instant;
+import java.util.Map;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.aigreentick.services.notification.config.properties.EmailProperties;
 import com.aigreentick.services.notification.dto.request.email.EmailNotificationRequest;
+import com.aigreentick.services.notification.enums.AuditEventType;
 import com.aigreentick.services.notification.enums.NotificationStatus;
 import com.aigreentick.services.notification.enums.email.EmailProviderType;
+import com.aigreentick.services.notification.event.audit.AuditEvent;
+import com.aigreentick.services.notification.event.audit.AuditEventPublisher;
 import com.aigreentick.services.notification.exceptions.NotificationSendException;
 import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.provider.email.EmailProviderStrategy;
@@ -29,6 +33,7 @@ public class EmailDeliveryServiceImpl {
     private final EmailNotificationServiceImpl emailNotificationService;
     private final EmailProperties emailProperties;
     private final BatchNotificationWriter batchWriter;
+    private final AuditEventPublisher auditPublisher;
 
     // ==================== SYNCHRONOUS DELIVERY ====================
 
@@ -73,6 +78,7 @@ public class EmailDeliveryServiceImpl {
 
             log.info("Async email delivered successfully in {}ms for notification: {}", 
                     processingTime, notificationId);
+             publishSuccessAudit(notificationId, request, processingTime);
 
         } catch (Exception e) {
             log.error("Async email delivery failed for notification: {}", notificationId, e);
@@ -257,5 +263,32 @@ public class EmailDeliveryServiceImpl {
         notification.setStatus(NotificationStatus.FAILED);
         
         return emailNotificationService.save(notification);
+    }
+
+    /**
+     * Publish audit event for successful email delivery
+     */
+    private void publishSuccessAudit(String notificationId, 
+                                     EmailNotificationRequest request, 
+                                     long processingTime) {
+        try {
+            AuditEvent event = AuditEvent.builder()
+                    .eventType(AuditEventType.EMAIL_SENT)
+                    .serviceName("notification-service")
+                    .entityId(notificationId)
+                    .entityType("EMAIL_NOTIFICATION")
+                    .action("SEND_EMAIL")
+                    .status("SUCCESS")
+                    .metadata(Map.of(
+                        "recipients", request.getTo(),
+                        "subject", request.getSubject(),
+                        "processingTimeMs", processingTime
+                    ))
+                    .build();
+            
+            auditPublisher.publish(event);
+        } catch (Exception e) {
+            log.error("Failed to publish success audit event", e);
+        }
     }
 }

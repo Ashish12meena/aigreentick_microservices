@@ -8,7 +8,7 @@ spring:
       - redis
       - notification-provider
   application:
-    name: notifcation-service
+    name: notification-service
 
 server:
   port: 7996
