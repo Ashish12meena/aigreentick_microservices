@@ -23,7 +23,7 @@ public class EmailProperties {
     @NotNull
     private EmailProviderType active = EmailProviderType.SMTP;
 
-    private RetryProperties retry = new RetryProperties();
+    private EmailRetryProperties retry = new EmailRetryProperties();
     private EmailTemplateProperties template;
     private RateLimitProperties rateLimit = new RateLimitProperties();
     private ValidationProperties validation = new ValidationProperties();
