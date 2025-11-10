@@ -63,14 +63,11 @@ public class EmailDeliveryServiceImpl {
         long startTime = System.currentTimeMillis();
 
         try {
-            // Update status to PROCESSING
             updateNotificationStatus(notificationId, NotificationStatus.PROCESSING);
 
-            // Select provider and send
             EmailProviderStrategy provider = providerSelector.selectProvider();
             provider.send(request);
 
-            // Update to SENT
             long processingTime = System.currentTimeMillis() - startTime;
             updateNotificationSuccess(notificationId, provider.getProviderType(), processingTime);
 
@@ -98,7 +95,7 @@ public class EmailDeliveryServiceImpl {
     }
 
     // ==================== NOTIFICATION MANAGEMENT ====================
-
+ 
     /**
      * Create notification record in PENDING status
      * Called before async processing

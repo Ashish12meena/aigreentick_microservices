@@ -25,174 +25,175 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class EmailOrchestratorServiceImpl {
-    
-    private final EmailDeliveryServiceImpl emailDeliveryService;
-    private final EmailTemplateProcessorService templateProcessor;
-    private final EmailValidationService validationService;
-    private final EmailNotificationMapper emailNotificationMapper;
-    private final EmailNotificationServiceImpl notificationService;
 
-    // ==================== SYNCHRONOUS Email Sending ====================
+        private final EmailDeliveryServiceImpl emailDeliveryService;
+        private final EmailTemplateProcessorService templateProcessor;
+        private final EmailValidationService validationService;
+        private final EmailNotificationMapper emailNotificationMapper;
+        private final EmailNotificationServiceImpl notificationService;
 
-    /**
-     * Send email synchronously - waits for completion
-     */
-    public EmailNotificationResponse sendEmail(
-            EmailNotificationControllerRequest request,
-            List<MultipartFile> attachmentFiles,
-            List<MultipartFile> inlineResources) {
-        
-        log.info("Orchestrating SYNC email send to: {}", request.getTo());
+        // ==================== SYNCHRONOUS Email Sending ====================
 
-        EmailNotificationRequest emailRequest = emailNotificationMapper
-                .toEmailRequest(request, attachmentFiles, inlineResources);
+        /**
+         * Send email synchronously - waits for completion
+         */
+        public EmailNotificationResponse sendEmail(
+                        EmailNotificationControllerRequest request,
+                        List<MultipartFile> attachmentFiles,
+                        List<MultipartFile> inlineResources) {
 
-        validationService.validateEmailRequest(emailRequest);
-        
-        EmailNotification notification = emailDeliveryService.deliver(emailRequest);
-        
-        return mapToResponse(notification);
-    }
+                log.info("Orchestrating SYNC email send to: {}", request.getTo());
 
-    // ==================== ASYNCHRONOUS Email Sending ====================
+                EmailNotificationRequest emailRequest = emailNotificationMapper
+                                .toEmailRequest(request, attachmentFiles, inlineResources);
 
-    /**
-     * Send email asynchronously - returns immediately with tracking ID
-     * 
-     * Flow:
-     * 1. Validate request
-     * 2. Create notification record in PENDING status
-     * 3. Submit to async processor
-     * 4. Return notification ID immediately
-     */
-    public AsyncEmailResponse sendEmailAsync(
-            EmailNotificationControllerRequest request,
-            List<MultipartFile> attachmentFiles,
-            List<MultipartFile> inlineResources) {
-        
-        log.info("Orchestrating ASYNC email send to: {}", request.getTo());
+                validationService.validateEmailRequest(emailRequest);
 
-        // Map and validate
-        EmailNotificationRequest emailRequest = emailNotificationMapper
-                .toEmailRequest(request, attachmentFiles, inlineResources);
-        
-        validationService.validateEmailRequest(emailRequest);
+                EmailNotification notification = emailDeliveryService.deliver(emailRequest);
 
-        // Create notification record in PENDING status
-        EmailNotification notification = emailDeliveryService.createPendingNotification(emailRequest);
+                return mapToResponse(notification);
+        }
 
-        // Submit for async processing (fire-and-forget)
-        emailDeliveryService.deliverAsync(emailRequest, notification.getId());
+        // ==================== ASYNCHRONOUS Email Sending ====================
 
-        // Return immediately with tracking info
-        return AsyncEmailResponse.builder()
-                .notificationId(notification.getId())
-                .status(NotificationStatus.PENDING)
-                .message("Email accepted for processing")
-                .acceptedAt(Instant.now())
-                .estimatedProcessingTimeSeconds(5)
-                .statusCheckUrl("/api/v1/notification/email/status/" + notification.getId())
-                .build();
-    }
+        /**
+         * Send email asynchronously - returns immediately with tracking ID
+         * 
+         * Flow:
+         * 1. Validate request
+         * 2. Create notification record in PENDING status
+         * 3. Submit to async processor
+         * 4. Return notification ID immediately
+         */
+        public AsyncEmailResponse sendEmailAsync(
+                        EmailNotificationControllerRequest request,
+                        List<MultipartFile> attachmentFiles,
+                        List<MultipartFile> inlineResources) {
 
-    // ==================== TEMPLATED Email Sending ====================
+                log.info("Orchestrating ASYNC email send to: {}", request.getTo());
 
-    /**
-     * Send templated email synchronously
-     */
-    public EmailNotificationResponse sendTemplatedEmail(SendTemplatedEmailRequest request) {
-        log.info("Orchestrating SYNC templated email send to: {} with template: {}",
-                request.getTo(), request.getTemplateCode());
+                EmailNotificationRequest emailRequest = emailNotificationMapper
+                                .toEmailRequest(request, attachmentFiles, inlineResources);
 
-        EmailNotificationRequest processedRequest = processTemplate(request);
-        validationService.validateEmailRequest(processedRequest);
+                validationService.validateEmailRequest(emailRequest);
 
-        EmailNotification notification = emailDeliveryService.deliver(processedRequest);
-        return mapToResponse(notification);
-    }
+                EmailNotification notification = emailDeliveryService.createPendingNotification(emailRequest);
 
-    /**
-     * Send templated email asynchronously
-     */
-    public AsyncEmailResponse sendTemplatedEmailAsync(SendTemplatedEmailRequest request) {
-        log.info("Orchestrating ASYNC templated email send to: {} with template: {}",
-                request.getTo(), request.getTemplateCode());
+                emailDeliveryService.deliverAsync(emailRequest, notification.getId());
 
-        EmailNotificationRequest processedRequest = processTemplate(request);
-        validationService.validateEmailRequest(processedRequest);
+                return AsyncEmailResponse.builder()
+                                .notificationId(notification.getId())
+                                .status(NotificationStatus.PENDING)
+                                .message("Email accepted for processing")
+                                .acceptedAt(Instant.now())
+                                .estimatedProcessingTimeSeconds(5)
+                                .statusCheckUrl("/api/v1/notification/email/status/" + notification.getId())
+                                .build();
+        }
 
-        // Create notification record in PENDING status
-        EmailNotification notification = emailDeliveryService.createPendingNotification(processedRequest);
+        // ==================== TEMPLATED Email Sending ====================
 
-        // Submit for async processing
-        emailDeliveryService.deliverAsync(processedRequest, notification.getId());
+        /**
+         * Send templated email synchronously
+         */
+        public EmailNotificationResponse sendTemplatedEmail(SendTemplatedEmailRequest request) {
+                log.info("Orchestrating SYNC templated email send to: {} with template: {}",
+                                request.getTo(), request.getTemplateCode());
 
-        return AsyncEmailResponse.builder()
-                .notificationId(notification.getId())
-                .status(NotificationStatus.PENDING)
-                .message("Templated email accepted for processing")
-                .acceptedAt(Instant.now())
-                .estimatedProcessingTimeSeconds(5)
-                .statusCheckUrl("/api/v1/notification/email/status/" + notification.getId())
-                .build();
-    }
+                EmailNotificationRequest processedRequest = processTemplate(request);
+                validationService.validateEmailRequest(processedRequest);
 
-    // ==================== BATCH Email Sending ====================
+                EmailNotification notification = emailDeliveryService.deliver(processedRequest);
+                return mapToResponse(notification);
+        }
 
-    /**
-     * Send batch of emails asynchronously
-     */
-    public List<AsyncEmailResponse> sendBatchEmailAsync(
-            List<EmailNotificationControllerRequest> requests) {
-        
-        log.info("Orchestrating ASYNC batch email send for {} emails", requests.size());
+        /**
+         * Send templated email asynchronously
+         */
+        public AsyncEmailResponse sendTemplatedEmailAsync(SendTemplatedEmailRequest request) {
+                log.info("Orchestrating ASYNC templated email send to: {} with template: {}",
+                                request.getTo(), request.getTemplateCode());
 
-        return requests.stream()
-                .map(request -> sendEmailAsync(request, null, null))
-                .collect(Collectors.toList());
-    }
+                EmailNotificationRequest processedRequest = processTemplate(request);
+                validationService.validateEmailRequest(processedRequest);
 
-    // ==================== STATUS CHECKING ====================
+                // Create notification record in PENDING status
+                EmailNotification notification = emailDeliveryService.createPendingNotification(processedRequest);
 
-    /**
-     * Get status of an email notification
-     */
-    public EmailNotificationResponse getEmailStatus(String notificationId) {
-        log.debug("Fetching status for notification: {}", notificationId);
+                // Submit for async processing
+                emailDeliveryService.deliverAsync(processedRequest, notification.getId());
 
-        EmailNotification notification = notificationService.findOptionalById(notificationId)
-                .orElseThrow(() -> new EmailTemplateNotFoundException(
-                        "Notification not found: " + notificationId));
+                return AsyncEmailResponse.builder()
+                                .notificationId(notification.getId())
+                                .status(NotificationStatus.PENDING)
+                                .message("Templated email accepted for processing")
+                                .acceptedAt(Instant.now())
+                                .estimatedProcessingTimeSeconds(5)
+                                .statusCheckUrl("/api/v1/notification/email/status/" + notification.getId())
+                                .build();
+        }
 
-        return mapToResponse(notification);
-    }
+        // ==================== BATCH Email Sending ====================
 
-    // ==================== HELPER METHODS ====================
+        /**
+         * Send batch of emails asynchronously
+         * 
+         * @param inlineResources
+         * @param attachmentFiles
+         */
+        public List<AsyncEmailResponse> sendBatchEmailAsync(
+                        List<EmailNotificationControllerRequest> requests,
+                        List<MultipartFile> attachmentFiles,
+                        List<MultipartFile> inlineResources) {
 
-    private EmailNotificationRequest processTemplate(SendTemplatedEmailRequest request) {
-        EmailNotificationRequest baseRequest = EmailNotificationRequest.builder()
-                .to(request.getTo())
-                .cc(request.getCc())
-                .bcc(request.getBcc())
-                .attachments(request.getAttachments())
-                .build();
+                log.info("Orchestrating ASYNC batch email send for {} emails", requests.size());
 
-        return templateProcessor.processTemplateByCode(
-                request.getTemplateCode(),
-                request.getVariables(),
-                baseRequest);
-    }
+                return requests.stream()
+                                .map(request -> sendEmailAsync(request, attachmentFiles, inlineResources))
+                                .collect(Collectors.toList());
+        }
 
-    private EmailNotificationResponse mapToResponse(EmailNotification notification) {
-        return EmailNotificationResponse.builder()
-                .id(notification.getId())
-                .to(notification.getTo())
-                .subject(notification.getSubject())
-                .status(notification.getStatus())
-                .providerType(notification.getProviderType())
-                .retryCount(notification.getRetryCount())
-                .createdAt(notification.getCreatedAt())
-                .updatedAt(notification.getUpdatedAt())
-                .build();
-    }
+        // ==================== STATUS CHECKING ====================
+
+        /**
+         * Get status of an email notification
+         */
+        public EmailNotificationResponse getEmailStatus(String notificationId) {
+                log.debug("Fetching status for notification: {}", notificationId);
+
+                EmailNotification notification = notificationService.findOptionalById(notificationId)
+                                .orElseThrow(() -> new EmailTemplateNotFoundException(
+                                                "Notification not found: " + notificationId));
+
+                return mapToResponse(notification);
+        }
+
+        // ==================== HELPER METHODS ====================
+
+        private EmailNotificationRequest processTemplate(SendTemplatedEmailRequest request) {
+                EmailNotificationRequest baseRequest = EmailNotificationRequest.builder()
+                                .to(request.getTo())
+                                .cc(request.getCc())
+                                .bcc(request.getBcc())
+                                .attachments(request.getAttachments())
+                                .build();
+
+                return templateProcessor.processTemplateByCode(
+                                request.getTemplateCode(),
+                                request.getVariables(),
+                                baseRequest);
+        }
+
+        private EmailNotificationResponse mapToResponse(EmailNotification notification) {
+                return EmailNotificationResponse.builder()
+                                .id(notification.getId())
+                                .to(notification.getTo())
+                                .subject(notification.getSubject())
+                                .status(notification.getStatus())
+                                .providerType(notification.getProviderType())
+                                .retryCount(notification.getRetryCount())
+                                .createdAt(notification.getCreatedAt())
+                                .updatedAt(notification.getUpdatedAt())
+                                .build();
+        }
 }

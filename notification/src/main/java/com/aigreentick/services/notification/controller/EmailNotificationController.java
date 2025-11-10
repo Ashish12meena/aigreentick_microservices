@@ -58,7 +58,6 @@ public class EmailNotificationController {
         
         log.info("Received ASYNC request to send email to: {}", request.getTo());
 
-        // Immediately return with notification ID
         AsyncEmailResponse response = emailOrchestratorService.sendEmailAsync(
                 request, attachmentFiles, inlineResources);
         
@@ -111,17 +110,25 @@ public class EmailNotificationController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Batch async send - accepts multiple emails
+      /**
+     * Batch async send - accepts multiple emails with attachments
      * Returns list of notification IDs for tracking
+     * 
+     * Note: For batch with attachments, use multipart form data
      */
-    @PostMapping(value = "/send/batch/async", consumes = MediaType.APPLICATION_JSON_VALUE)
+    // Currently not use ready
+    @PostMapping(value = "/send/batch/async", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<AsyncEmailResponse>> sendBatchEmailAsync(
-            @Valid @RequestBody List<EmailNotificationControllerRequest> requests) {
+            @RequestPart("requests") @Valid List<EmailNotificationControllerRequest> requests,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachmentFiles,
+            @RequestPart(value = "inline", required = false) List<MultipartFile> inlineResources) {
         
-        log.info("Received ASYNC batch request for {} emails", requests.size());
+        log.info("Received ASYNC batch request for {} emails with {} attachments", 
+                requests.size(), 
+                attachmentFiles != null ? attachmentFiles.size() : 0);
 
-        List<AsyncEmailResponse> responses = emailOrchestratorService.sendBatchEmailAsync(requests);
+        List<AsyncEmailResponse> responses = emailOrchestratorService.sendBatchEmailAsync(
+                requests, attachmentFiles, inlineResources);
         
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(responses);
     }
