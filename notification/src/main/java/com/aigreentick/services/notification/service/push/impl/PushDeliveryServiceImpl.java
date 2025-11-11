@@ -17,7 +17,7 @@ import com.aigreentick.services.notification.model.entity.DeviceToken;
 import com.aigreentick.services.notification.model.entity.PushNotification;
 import com.aigreentick.services.notification.provider.push.PushProviderStrategy;
 import com.aigreentick.services.notification.provider.selector.PushProviderSelector;
-import com.aigreentick.services.notification.service.batch.BatchNotificationWriter;
+import com.aigreentick.services.notification.service.batch.BatchPushNotificationWriter;
 
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class PushDeliveryServiceImpl {
     private final PushProviderSelector providerSelector;
     private final PushNotificationServiceImpl pushNotificationService;
     private final DeviceTokenService deviceTokenService;
-    private final BatchNotificationWriter batchWriter;
+    private final BatchPushNotificationWriter batchWriter;
     private final AuditEventPublisher auditPublisher;
     
     @Transactional

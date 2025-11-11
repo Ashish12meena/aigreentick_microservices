@@ -18,7 +18,7 @@ import com.aigreentick.services.notification.exceptions.NotificationSendExceptio
 import com.aigreentick.services.notification.model.entity.EmailNotification;
 import com.aigreentick.services.notification.provider.email.EmailProviderStrategy;
 import com.aigreentick.services.notification.provider.selector.EmailProviderSelector;
-import com.aigreentick.services.notification.service.batch.BatchNotificationWriter;
+import com.aigreentick.services.notification.service.batch.BatchEmailNotificationWriter;
 
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class EmailDeliveryServiceImpl {
     private final EmailProviderSelector providerSelector;
     private final EmailNotificationServiceImpl emailNotificationService;
     private final EmailProperties emailProperties;
-    private final BatchNotificationWriter batchWriter;
+    private final BatchEmailNotificationWriter batchWriter;
     private final AuditEventPublisher auditPublisher;
 
     // ==================== SYNCHRONOUS DELIVERY ====================
