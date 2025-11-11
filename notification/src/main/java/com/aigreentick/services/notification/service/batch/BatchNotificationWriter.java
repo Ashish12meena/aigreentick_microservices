@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.aigreentick.services.notification.model.entity.EmailNotification;
+import com.aigreentick.services.notification.model.entity.PushNotification;
 import com.aigreentick.services.notification.repository.EmailNotificationRepository;
 
 import jakarta.annotation.PostConstruct;
@@ -164,5 +165,10 @@ public class BatchNotificationWriter {
     @Scheduled(fixedDelay = 30000)
     public void logQueueStatus() {
         log.debug("Batch writer queue size: {}/{}", writeQueue.size(), QUEUE_CAPACITY);
+    }
+
+    public boolean enqueue(PushNotification notification) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'enqueue'");
     }
 }

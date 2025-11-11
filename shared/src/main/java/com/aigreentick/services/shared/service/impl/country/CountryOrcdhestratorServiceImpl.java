@@ -1,6 +1,6 @@
 package com.aigreentick.services.shared.service.impl.country;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,7 @@ public class CountryOrcdhestratorServiceImpl {
     public void softDeleteCountry(Long id) {
         Country country = countryService.findById(id);
         country.setDeleted(true);
-        country.setDeletedAt(LocalDateTime.now());
+        country.setDeletedAt(Instant.now());
         countryService.save(country);
     }
 }

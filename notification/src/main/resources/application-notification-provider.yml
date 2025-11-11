@@ -13,12 +13,6 @@ spring:
             enable: true
   default-encoding: ${MAIL_ENCODING:UTF-8}
 
-# Firebase Configuration
-firebase:
-  enabled: ${FIREBASE_ENABLED:false}
-  service-account-key: firebase-service-account.json
-  project-id: aigreentick-40943
-
 
 # ============================================
 # EMAIL CONFIGURATION
@@ -86,3 +80,49 @@ email:
     max-attachments: ${EMAIL_MAX_ATTACHMENTS:10}
     max-attachment-size-mb: ${EMAIL_MAX_ATTACHMENT_SIZE:25}
     max-body-size-kb: ${EMAIL_MAX_BODY_SIZE:500}
+
+# ============================================
+# PUSH NOTIFICATION CONFIGURATION
+# ============================================
+push:
+  active: FCM
+  
+  fcm:
+    enabled: ${FCM_ENABLED:true}
+    priority: ${FCM_PRIORITY:10}
+    project-id: ${FCM_PROJECT_ID:}
+    credentials-path: ${FCM_CREDENTIALS_PATH:firebase-service-account.json}
+    timeout: ${FCM_TIMEOUT:30000}
+    dry-run: ${FCM_DRY_RUN:false}
+  
+  apns:
+    enabled: ${APNS_ENABLED:false}
+    priority: ${APNS_PRIORITY:5}
+    team-id: ${APNS_TEAM_ID:}
+    key-id: ${APNS_KEY_ID:}
+    key-path: ${APNS_KEY_PATH:}
+    bundle-id: ${APNS_BUNDLE_ID:}
+    production: ${APNS_PRODUCTION:false}
+    timeout: ${APNS_TIMEOUT:30000}
+  
+  validation:
+    enabled: ${PUSH_VALIDATION_ENABLED:true}
+    max-recipients: ${PUSH_MAX_RECIPIENTS:100}
+    max-title-length: ${PUSH_MAX_TITLE_LENGTH:65}
+    max-body-length: ${PUSH_MAX_BODY_LENGTH:240}
+    max-data-payload-kb: ${PUSH_MAX_DATA_PAYLOAD_KB:4}
+  
+  retry:
+    enabled: ${PUSH_RETRY_ENABLED:true}
+    max-attempts: ${PUSH_RETRY_MAX_ATTEMPTS:3}
+    initial-delay-ms: ${PUSH_RETRY_INITIAL_DELAY:1000}
+    multiplier: ${PUSH_RETRY_MULTIPLIER:2.0}
+    max-delay-ms: ${PUSH_RETRY_MAX_DELAY:30000}
+
+# Firebase Configuration
+firebase:
+  enabled: ${FIREBASE_ENABLED:true}
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
+  project-id: ${FIREBASE_PROJECT_ID:your-project-id}
+  database-url: ${FIREBASE_DATABASE_URL:}
+  storage-bucket: ${FIREBASE_STORAGE_BUCKET:}

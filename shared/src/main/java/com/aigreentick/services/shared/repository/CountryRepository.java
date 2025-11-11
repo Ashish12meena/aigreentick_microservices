@@ -19,15 +19,15 @@ public interface CountryRepository extends JpaRepository<Country,Long>   {
 
     boolean existsByIsoCode(String isoCode);
 
-    boolean existsByIsoCodeAndDeletedIsFalse(String isoCode);
+    boolean existsByIsoCodeAndIsDeletedIsFalse(String isoCode);
 
-    boolean existsByNameIgnoreCaseAndDeletedIsFalse(String name);
+    boolean existsByNameIgnoreCaseAndIsDeletedIsFalse(String name);
 
-    Optional<Long> findIdByMobileCodeAndDeletedIsFalse(String mobileCode);
+    Optional<Long> findIdByMobileCodeAndIsDeletedIsFalse(String mobileCode);
 
-    Optional<Country> findByMobileCodeAndDeletedIsFalse(String code);
+    Optional<Country> findByMobileCodeAndIsDeletedIsFalse(String code);
 
-    Optional<Country> findByNameIgnoreCaseAndDeletedIsFalse(String name);
+    Optional<Country> findByNameIgnoreCaseAndIsDeletedIsFalse(String name);
 
 
 }

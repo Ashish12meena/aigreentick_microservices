@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  */
 @FeignClient(
     name = "audit-service",
-    url = "${audit.service.url:http://localhost:8081}",
+    url = "${audit.service.url",
     configuration = AuditClientConfig.class
 )
 public interface AuditFeignClient {

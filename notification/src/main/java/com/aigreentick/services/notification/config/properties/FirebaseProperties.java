@@ -9,7 +9,13 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "firebase")
 @Data
 public class FirebaseProperties {
-    private boolean enabled = false;
+     private boolean enabled = false;
+    
     private String credentialsPath;
+    
     private String projectId;
+    
+    private String databaseUrl;
+    
+    private String storageBucket;
 }

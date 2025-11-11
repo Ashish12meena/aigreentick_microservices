@@ -51,36 +51,36 @@ public class CountryServiceImpl extends JpaBaseService<Country, Long> {
     // ===== GET BY NAME =====
     @Transactional(readOnly = true)
     public CountryResponseDto getCountryByName(String name) {
-        Country country = countryRepository.findByNameIgnoreCaseAndDeletedIsFalse(name)
+        Country country = countryRepository.findByNameIgnoreCaseAndIsDeletedIsFalse(name)
                 .orElseThrow(() -> new CountryNotFoundException("Country not found with name: " + name));
         return countryMapper.toCountryDto(country);
     }
 
     @Transactional(readOnly = true)
     public Country getByName(String name) {
-        return countryRepository.findByNameIgnoreCaseAndDeletedIsFalse(name)
+        return countryRepository.findByNameIgnoreCaseAndIsDeletedIsFalse(name)
                 .orElseThrow(() -> new CountryNotFoundException("Country not found with name " + name));
     }
 
     // ===== GET BY MOBILE CODE =====
     @Transactional(readOnly = true)
     public CountryResponseDto getCountryByCode(String code) {
-        Country country = countryRepository.findByMobileCodeAndDeletedIsFalse(code)
+        Country country = countryRepository.findByMobileCodeAndIsDeletedIsFalse(code)
                 .orElseThrow(() -> new CountryNotFoundException("Country not found with code: " + code));
         return countryMapper.toCountryDto(country);
     }
 
     @Transactional(readOnly = true)
     public Long getCountryIdByMobileCode(String mobileCode) {
-        return countryRepository.findIdByMobileCodeAndDeletedIsFalse(mobileCode)
+        return countryRepository.findIdByMobileCodeAndIsDeletedIsFalse(mobileCode)
                 .orElseThrow(() -> new CountryNotFoundException("Country not found by mobile code: " + mobileCode));
     }
 
    void validateUnique(Country country) {
-        if (country.getName() != null && countryRepository.existsByNameIgnoreCaseAndDeletedIsFalse(country.getName())) {
+        if (country.getName() != null && countryRepository.existsByNameIgnoreCaseAndIsDeletedIsFalse(country.getName())) {
             throw new DuplicateResourceException("Country already exists with name: " + country.getName());
         }
-        if (country.getIsoCode() != null && countryRepository.existsByIsoCodeAndDeletedIsFalse(country.getIsoCode())) {
+        if (country.getIsoCode() != null && countryRepository.existsByIsoCodeAndIsDeletedIsFalse(country.getIsoCode())) {
             throw new DuplicateResourceException("Country already exists with ISO code: " + country.getIsoCode());
         }
     }
@@ -105,12 +105,12 @@ public class CountryServiceImpl extends JpaBaseService<Country, Long> {
     // ===== EXISTENCE CHECKS =====
     @Transactional(readOnly = true)
     public boolean existsByIsoCode(String isoCode) {
-        return countryRepository.existsByIsoCodeAndDeletedIsFalse(isoCode);
+        return countryRepository.existsByIsoCodeAndIsDeletedIsFalse(isoCode);
     }
 
     @Transactional(readOnly = true)
     public boolean existsByName(String name) {
-        return countryRepository.existsByNameIgnoreCaseAndDeletedIsFalse(name);
+        return countryRepository.existsByNameIgnoreCaseAndIsDeletedIsFalse(name);
     }
 
     @Override

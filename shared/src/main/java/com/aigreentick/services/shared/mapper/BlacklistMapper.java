@@ -1,7 +1,7 @@
 package com.aigreentick.services.shared.mapper;
 
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,8 +39,8 @@ public class BlacklistMapper {
         blacklist.setCountryId(dto.getCountryId());
         blacklist.setReason(dto.getReason());
         blacklist.setBlocked(true);
-        blacklist.setCreatedAt(LocalDateTime.now());
-        blacklist.setUpdatedAt(LocalDateTime.now());
+        blacklist.setCreatedAt(Instant.now());
+        blacklist.setUpdatedAt(Instant.now());
         return blacklist;
     }
 
