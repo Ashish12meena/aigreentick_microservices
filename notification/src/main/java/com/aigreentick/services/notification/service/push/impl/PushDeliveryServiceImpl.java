@@ -37,7 +37,6 @@ public class PushDeliveryServiceImpl {
     @Transactional
     @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
     public PushNotification deliver(PushNotificationRequest request, DeviceToken deviceToken) {
-        // Select provider based on device platform
         PushProviderStrategy provider = providerSelector.selectProviderByPlatform(deviceToken.getPlatform());
         return executeDelivery(request, deviceToken, provider, null);
     }
@@ -53,7 +52,6 @@ public class PushDeliveryServiceImpl {
         try {
             updateNotificationStatus(notificationId, NotificationStatus.PROCESSING);
             
-            // Select provider based on device platform
             PushProviderStrategy provider = providerSelector.selectProviderByPlatform(deviceToken.getPlatform());
             provider.send(request);
             
