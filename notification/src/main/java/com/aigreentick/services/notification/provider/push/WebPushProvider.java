@@ -82,7 +82,6 @@ public class WebPushProvider implements PushProviderStrategy {
 
         try {
             Subscription subscription = parseSubscription(request.getDeviceToken());
-            
             String payload = buildWebPushPayload(request);
             
             Notification notification = new Notification(subscription, payload, determineUrgency(request));
