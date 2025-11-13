@@ -20,6 +20,7 @@ public class PushProperties {
     
     private FcmConfig fcm = new FcmConfig();
     private ApnsConfig apns = new ApnsConfig();
+    private WebConfig web = new WebConfig();
     private ValidationConfig validation = new ValidationConfig();
     private RetryConfig retry = new RetryConfig();
     
@@ -56,6 +57,25 @@ public class PushProperties {
         
         @Min(1000)
         private int timeout = 30000;
+    }
+    
+    @Data
+    public static class WebConfig {
+        private boolean enabled = false;
+        
+        @Min(1)
+        @Max(100)
+        private int priority = 3;
+        
+        private String vapidPublicKey;
+        private String vapidPrivateKey;
+        private String subject;
+        
+        @Min(1000)
+        private int timeout = 30000;
+        
+        @Min(0)
+        private int defaultTtl = 86400; // 24 hours
     }
     
     @Data

@@ -104,6 +104,15 @@ push:
     bundle-id: ${APNS_BUNDLE_ID:}
     production: ${APNS_PRODUCTION:false}
     timeout: ${APNS_TIMEOUT:30000}
+
+  web:
+    enabled: ${WEB_PUSH_ENABLED:false}
+    priority: ${WEB_PUSH_PRIORITY:5}
+    vapid-public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY:}
+    subject: ${WEB_PUSH_SUBJECT:mailto:support@aigreentick.com}
+    timeout: ${WEB_PUSH_TIMEOUT:30000}
+    default-ttl: ${WEB_PUSH_DEFAULT_TTL:86400}
   
   validation:
     enabled: ${PUSH_VALIDATION_ENABLED:true}

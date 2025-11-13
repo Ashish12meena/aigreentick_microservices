@@ -37,7 +37,8 @@ public class PushDeliveryServiceImpl {
     @Transactional
     @Retry(name = "emailRetry", fallbackMethod = "deliverFallback")
     public PushNotification deliver(PushNotificationRequest request, DeviceToken deviceToken) {
-        PushProviderStrategy provider = providerSelector.selectProvider();
+        // Select provider based on device platform
+        PushProviderStrategy provider = providerSelector.selectProviderByPlatform(deviceToken.getPlatform());
         return executeDelivery(request, deviceToken, provider, null);
     }
     
@@ -52,14 +53,15 @@ public class PushDeliveryServiceImpl {
         try {
             updateNotificationStatus(notificationId, NotificationStatus.PROCESSING);
             
-            PushProviderStrategy provider = providerSelector.selectProvider();
+            // Select provider based on device platform
+            PushProviderStrategy provider = providerSelector.selectProviderByPlatform(deviceToken.getPlatform());
             provider.send(request);
             
             long processingTime = System.currentTimeMillis() - startTime;
             updateNotificationSuccess(notificationId, provider.getProviderType(), processingTime);
             
-            log.info("Async push delivered successfully in {}ms for notification: {}", 
-                    processingTime, notificationId);
+            log.info("Async push delivered successfully in {}ms for notification: {} via {}", 
+                    processingTime, notificationId, provider.getProviderType());
             
             publishSuccessAudit(notificationId, request, deviceToken, processingTime);
             
@@ -118,8 +120,8 @@ public class PushDeliveryServiceImpl {
             notification.setStatus(NotificationStatus.SENT);
             notification.setUpdatedAt(Instant.now());
             
-            log.info("Push notification delivered successfully to: {} via {}",
-                    deviceToken.getDeviceToken(), provider.getProviderType());
+            log.info("Push notification delivered successfully to: {} via {} for platform: {}",
+                    deviceToken.getDeviceToken(), provider.getProviderType(), deviceToken.getPlatform());
             
         } catch (Exception e) {
             log.error("Failed to deliver push via provider: {}", provider.getProviderType(), e);
@@ -244,10 +246,8 @@ public class PushDeliveryServiceImpl {
         log.error("All retry attempts exhausted for push notification. Error: {}", 
                 ex.getMessage());
         
-        PushNotification notification = createNotificationRecord(
-                request, 
-                deviceToken, 
-                providerSelector.selectProvider());
+        PushProviderStrategy provider = providerSelector.selectProviderByPlatform(deviceToken.getPlatform());
+        PushNotification notification = createNotificationRecord(request, deviceToken, provider);
         
         notification.setStatus(NotificationStatus.FAILED);
         

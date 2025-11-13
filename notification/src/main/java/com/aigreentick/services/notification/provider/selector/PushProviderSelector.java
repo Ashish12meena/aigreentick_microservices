@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.aigreentick.services.notification.config.properties.PushProperties;
+import com.aigreentick.services.notification.enums.push.DevicePlatform;
 import com.aigreentick.services.notification.enums.push.PushProviderType;
 import com.aigreentick.services.notification.exceptions.ProviderNotAvailableException;
 import com.aigreentick.services.notification.provider.push.PushProviderStrategy;
@@ -32,6 +33,9 @@ public class PushProviderSelector {
         log.info("Initialized PushProviderSelector with providers: {}", providers.keySet());
     }
     
+    /**
+     * Select provider based on active configuration
+     */
     public PushProviderStrategy selectProvider() {
         PushProviderType activeProviderType = properties.getActive();
         
@@ -46,6 +50,7 @@ public class PushProviderSelector {
         
         PushProviderStrategy fallbackProvider = providers.values().stream()
                 .filter(PushProviderStrategy::isAvailable)
+                .sorted((p1, p2) -> Integer.compare(p2.getPriority(), p1.getPriority()))
                 .findFirst()
                 .orElse(null);
         
@@ -55,6 +60,63 @@ public class PushProviderSelector {
         }
         
         throw new ProviderNotAvailableException("No push provider is currently available");
+    }
+    
+    /**
+     * Select provider based on device platform
+     * iOS -> APNs (if available), else FCM
+     * Android -> FCM
+     * Web -> Web Push (if available), else FCM
+     */
+    public PushProviderStrategy selectProviderByPlatform(DevicePlatform platform) {
+        log.debug("Selecting push provider for platform: {}", platform);
+        
+        PushProviderStrategy provider = null;
+        
+        switch (platform) {
+            case IOS:
+                // Try APNs first for iOS
+                provider = providers.get(PushProviderType.APNS);
+                if (provider != null && provider.isAvailable()) {
+                    log.debug("Selected APNs for iOS device");
+                    return provider;
+                }
+                // Fallback to FCM (supports iOS too)
+                provider = providers.get(PushProviderType.FCM);
+                if (provider != null && provider.isAvailable()) {
+                    log.debug("Falling back to FCM for iOS device");
+                    return provider;
+                }
+                break;
+                
+            case ANDROID:
+                // FCM is primary for Android
+                provider = providers.get(PushProviderType.FCM);
+                if (provider != null && provider.isAvailable()) {
+                    log.debug("Selected FCM for Android device");
+                    return provider;
+                }
+                break;
+                
+            case WEB:
+                // Try Web Push first
+                provider = providers.get(PushProviderType.WEB_PUSH);
+                if (provider != null && provider.isAvailable()) {
+                    log.debug("Selected Web Push for web device");
+                    return provider;
+                }
+                // Fallback to FCM (supports web too)
+                provider = providers.get(PushProviderType.FCM);
+                if (provider != null && provider.isAvailable()) {
+                    log.debug("Falling back to FCM for web device");
+                    return provider;
+                }
+                break;
+        }
+        
+        // If no platform-specific provider available, use active provider
+        log.warn("No platform-specific provider available for {}, using active provider", platform);
+        return selectProvider();
     }
     
     public PushProviderStrategy getProvider(PushProviderType providerType) {
